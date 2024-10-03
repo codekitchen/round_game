@@ -37,32 +37,43 @@ class Piece extends EngineObject {
     }
   }
   private drop() {
-    let placeHere = false;
     let movement = vec2(0, -1);
-    for (let c of this.children) {
-      let newPos = this.localPos.add(c.localPos).add(movement);
-      if (newPos.y < 0 || tetrisGame.isOccupied(newPos)) {
-        placeHere = true;
-      }
-    }
-    if (placeHere) {
+    const moved = this.tryMove(movement);
+    if (!moved) {
+      // couldn't move, time to place
       for (let c of [...this.children]) {
         this.removeChild(c);
         tetrisGame.addMino(c, this.localPos.add(c.localPos));
       }
       tetrisGame.newPiece();
-      return;
     }
-    // didn't place, so move down
-    this.localPos.y -= 1;
+  }
+
+  tryMove(movement: Vector2): boolean {
+    const newLoc = this.localPos.add(movement);
+    const valid = tetrisGame.validPieceLocation(this, newLoc);
+    if (valid) {
+      this.localPos = newLoc;
+    }
+    return valid;
   }
 
   rotate() {
-    for (let c of this.children) {
+    // this could use improvement -- the movement is janky because it shifts the
+    // piece around unexpectedly. it'd also be nice to shift left or right
+    // during rotation is we're blocked on one side.
+    const newPositions = this.children.map(c => {
       let oldPos = c.localPos;
       let y = -oldPos.x;
       let x = oldPos.y;
-      c.localPos = vec2(x, y);
+      return [c, vec2(x, y)];
+    })
+    if (!newPositions.every(([_, p]) => tetrisGame.validMinoLocation(this.localPos.add(p)))) {
+      // invalid rotation
+      return;
+    }
+    for (let [c,p] of newPositions) {
+      c.localPos = p;
     }
   }
   render() { }
@@ -95,15 +106,30 @@ export class TetrisGame extends EngineObject {
     this.addChild(c, pos);
     this.grid[pos.y * TetrisGame.WIDTH + pos.x] = c;
   }
+  validPieceLocation(piece: Piece, pos: Vector2): boolean {
+    for (let c of piece.children) {
+      let newPos = pos.add(c.localPos);
+      if (!this.validMinoLocation(newPos))
+        return false;
+    }
+    return true;
+  }
+  validMinoLocation(pos: Vector2) {
+    return pos.x >= 0 &&
+      pos.x < TetrisGame.WIDTH &&
+      pos.y >= 0 &&
+      !this.isOccupied(pos);
+  }
+
   isOccupied(pos: Vector2) {
     return this.grid[pos.y * TetrisGame.WIDTH + pos.x] !== undefined;
   }
   processEvent(event: GameEvent) {
     if (event.type === 'left') {
-      this.piece.localPos.x -= 1;
+      this.piece.tryMove(vec2(-1, 0));
     }
     if (event.type === 'right') {
-      this.piece.localPos.x += 1;
+      this.piece.tryMove(vec2(1, 0));
     }
     if (event.type === 'rotate') {
       this.piece.rotate();
