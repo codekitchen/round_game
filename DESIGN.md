@@ -34,3 +34,21 @@ pause when the replay queue is empty. The plan is to define a number of frames
 that we will wait for data on before resuming. If we stall too often, we'll
 increase that number to buffer more, but intruduce more latency.
 
+## Client-Server Comms
+
+### Observer
+```mermaid
+sequenceDiagram
+    observer->>server: watch
+    server->>observer: catch-up replay data
+    server->>observer: streaming events and heartbeats
+```
+
+### Player
+```mermaid
+sequenceDiagram
+    player->>server: play
+    server->>player: catch-up replay data
+    player->>server: events
+    player->>server: heartbeats when no event for N frames
+```

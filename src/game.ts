@@ -1,4 +1,5 @@
-import { vec2, Vector2 } from "./littlejs.esm.js";
+import { Color, drawTextScreen, vec2, Vector2 } from "./littlejs.esm.js";
+import { ServerConnection } from "./server.js";
 import { TetrisGame } from "./tetris_game.js"
 
 type Event = { frame: number };
@@ -9,6 +10,7 @@ export class Game {
   frame = 0;
   recording: Event[] = [];
   recState: 'none' | 'recording' | 'replaying' = 'none';
+  server = new ServerConnection
 
   constructor() {
     this.reset();
@@ -19,6 +21,14 @@ export class Game {
     this.tetris?.destroy();
     this.tetris = new TetrisGame(124);
     this.frame = 0;
+  }
+
+  render() {
+    if (this.server.state === 'connecting') {
+      drawTextScreen('Connecting...', vec2(400, 200), 200, new Color(1, 1, 1));
+    } else {
+      drawTextScreen('Connected', vec2(400, 200), 200, new Color(1, 1, 1));
+    }
   }
 
   // the game state is never updated directly, we always

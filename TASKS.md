@@ -5,6 +5,8 @@
 
 # Server
 - [x] serve static assets
+- [ ] accept players and observers
+- [ ] stream events to observers from player
 - [ ] logging
 - [ ] accept new players and assign them to a game
 - [ ] relay state updates to players
@@ -13,7 +15,12 @@
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around
+- [ ] hold down left/right to move, not just tap
 - [ ] Player username and emoji avatar
 - [ ] Show position in the queue and notify when they're next
 - [ ] Handle too many players joining (100 max?)
 - [ ] Show some basic stats
+
+# Deploy
+- [ ] Deploy to an instance, probably Fargate. Use aws copilot?
+- [ ] Will need HTTPS, so SSL cert. roundrobin.codekitchen.net?

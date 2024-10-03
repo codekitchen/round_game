@@ -53,6 +53,7 @@ function gameRender() {
 function gameRenderPost() {
   // called after objects are rendered
   // draw effects or hud that appear above all objects
+  game.render();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
