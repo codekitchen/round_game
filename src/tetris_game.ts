@@ -41,11 +41,7 @@ class Piece extends EngineObject {
     const moved = this.tryMove(movement);
     if (!moved) {
       // couldn't move, time to place
-      for (let c of [...this.children]) {
-        this.removeChild(c);
-        tetrisGame.addMino(c, this.localPos.add(c.localPos));
-      }
-      tetrisGame.newPiece();
+      tetrisGame.placePiece(this);
     }
   }
 
@@ -82,7 +78,7 @@ class Piece extends EngineObject {
 export class TetrisGame extends EngineObject {
   static WIDTH = 10
   static HEIGHT = 20
-  grid: Mino[] = Array(TetrisGame.WIDTH * TetrisGame.HEIGHT)
+  grid: (Mino|undefined)[] = Array(TetrisGame.WIDTH * TetrisGame.HEIGHT)
 
   piece!: Piece;
   rand!: RandomGenerator;
@@ -120,7 +116,46 @@ export class TetrisGame extends EngineObject {
       pos.y >= 0 &&
       !this.isOccupied(pos);
   }
-
+  placePiece(piece: Piece) {
+    for (let c of [...piece.children]) {
+      piece.removeChild(c);
+      this.addMino(c, piece.localPos.add(c.localPos));
+    }
+    this.checkForScoring();
+    this.newPiece();
+  }
+  checkForScoring() {
+    for (let y = 0; y < TetrisGame.HEIGHT; y++) {
+      while (this.rowFilled(y)) {
+        // scored. remove the current row and shift everything above it down
+        // this feels overly complex, because each grid position is pointing to
+        // a game object. I could probably avoid that.
+        for (let x = 0; x < TetrisGame.WIDTH; x++) {
+          this.grid[y * TetrisGame.WIDTH + x]?.destroy();
+        }
+        for (let y2 = y + 1; y2 < TetrisGame.HEIGHT; y2++) {
+          for (let x = 0; x < TetrisGame.WIDTH; x++) {
+            let mino = this.grid[y2 * TetrisGame.WIDTH + x];
+            if (mino)
+              mino.localPos.y -= 1;
+            this.grid[(y2-1) * TetrisGame.WIDTH + x] = mino;
+          }
+        }
+        for (let x = 0; x < TetrisGame.WIDTH; x++) {
+          this.grid[(TetrisGame.HEIGHT-1) * TetrisGame.WIDTH + x]?.destroy();
+          this.grid[(TetrisGame.HEIGHT - 1) * TetrisGame.WIDTH + x] = undefined;
+        }
+      }
+    }
+  }
+  rowFilled(y: number) {
+    for (let x = 0; x < TetrisGame.WIDTH; x++) {
+      if (this.grid[y * TetrisGame.WIDTH + x] === undefined) {
+        return false;
+      }
+    }
+    return true;
+  }
   isOccupied(pos: Vector2) {
     return this.grid[pos.y * TetrisGame.WIDTH + pos.x] !== undefined;
   }
