@@ -1,32 +1,35 @@
-import { Color, EngineObject, keyWasReleased, mousePos, randColor, randInt, vec2, Vector2 } from "./littlejs.esm.js";
+import { EngineObject, keyWasPressed, keyWasReleased, RandomGenerator, vec2, Vector2 } from "./littlejs.esm.js";
 import { NUM_SHAPES, SHAPES } from "./shapes.js";
 
 export type GameEvent = {
-  type: 'left' | 'right' | 'rotate';
+  type: 'left' | 'right' | 'rotate' | 'dropstart' | 'dropstop';
   frame: number;
 };
 
-class Tile extends EngineObject {
-
+// One segment of a tetromino
+class Mino extends EngineObject {
   constructor(type: number) {
     super();
     this.color = SHAPES[type].color;
   }
 }
 
+// Tetromino piece
 class Piece extends EngineObject {
+  static FAST_DROP_DELAY = 3;
   dropDelay = 12;
   dropCounter = 0;
   constructor(pos: Vector2, size: Vector2, type: number) {
     super(pos, size);
     for (let v of SHAPES[type].tiles) {
-      this.addChild(new Tile(type), v);
+      this.addChild(new Mino(type), v);
     }
   }
   update() {
     super.update();
     this.dropCounter++;
-    if (this.dropCounter > this.dropDelay) {
+    const dropNow = (game.dropFast && this.dropCounter > Piece.FAST_DROP_DELAY) || (this.dropCounter > this.dropDelay);
+    if (dropNow) {
       this.dropCounter = 0;
       this.drop()
     }
@@ -66,7 +69,6 @@ class Piece extends EngineObject {
 class Grid extends EngineObject {
   constructor() {
     super(vec2(0), vec2(10, 20));
-    this.addChild(new Tile(1));
   }
   render() { }
   isOccupied(pos: Vector2) {
@@ -78,6 +80,11 @@ class Grid extends EngineObject {
     }
     return false;
   }
+  reset() {
+    for (let c of [...this.children]) {
+      c.destroy();
+    }
+  }
 }
 
 export class Game {
@@ -85,22 +92,32 @@ export class Game {
   frame = 0;
   piece: Piece | null = null;
   grid: Grid = new Grid;
+  rand!: RandomGenerator;
+  dropFast = false;
 
   // recording infra
   recording: GameEvent[] = [];
   recState: 'none' | 'recording' | 'replaying' = 'none';
 
+  constructor() {
+    this.reset();
+    this.startRecording();
+  }
+
   reset() {
+    this.rand = new RandomGenerator(12345);
     this.frame = 0;
+    this.dropFast = false;
+    this.grid.reset();
     this.piece?.destroy();
     this.newPiece();
   }
   newPiece() {
     // temporary, eventually we'll do this elsewhere
-    const type = randInt(0, NUM_SHAPES);
+    const type = this.rand.int(NUM_SHAPES);
     this.piece = new Piece(vec2(4, 19), vec2(1, 1), type);
-
   }
+
   // the game state is never updated directly, we always
   // serialize to recording events and then replay them.
   // this helps ensure that the game is deterministic
@@ -118,6 +135,12 @@ export class Game {
     }
     if (keyWasReleased('ArrowUp')) {
       events.push({ type: 'rotate', frame: this.frame });
+    }
+    if (keyWasPressed('ArrowDown')) {
+      events.push({ type: 'dropstart', frame: this.frame });
+    }
+    if (keyWasReleased('ArrowDown')) {
+      events.push({ type: 'dropstop', frame: this.frame });
     }
 
     // replay all recorded
@@ -143,6 +166,12 @@ export class Game {
       }
       if (event.type === 'rotate') {
         this.piece!.rotate();
+      }
+      if (event.type === 'dropstart') {
+        this.dropFast = true;
+      }
+      if (event.type === 'dropstop') {
+        this.dropFast = false;
       }
     }
     this.frame++;

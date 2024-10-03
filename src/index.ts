@@ -1,5 +1,5 @@
 import { game } from "./game.js";
-import { cameraPos, Color, drawRect, engineInit, EngineObject, randColor, setCameraPos, setCanvasFixedSize, Sound, vec2 } from "./littlejs.esm.js";
+import { cameraPos, Color, drawRect, engineInit, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, vec2 } from "./littlejs.esm.js";
 
 declare global {
   interface Window {
@@ -21,15 +21,10 @@ function gameInit() {
   setCanvasFixedSize(vec2(1280, 720));
   let levelSize = game.grid.size;
   setCameraPos(levelSize.scale(.5));
+  // turn off collisions to avoid accidentally using them
+  setEnablePhysicsSolver(false);
 
   game.reset();
-
-  for (let x = 0; x < levelSize.x; x++) {
-    for (let y = 0; y < levelSize.y; y++) {
-      // const brick = new EngineObject(vec2(x+.5, y+.5), vec2(1, 1));
-      // brick.color = randColor();
-    }
-  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,7 +53,6 @@ function gameRender() {
 function gameRenderPost() {
   // called after objects are rendered
   // draw effects or hud that appear above all objects
-  // LittleJS.drawTextScreen(`score ${score}`, vec2(LittleJS.mainCanvasSize.scale(.5).x, 65), 50);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
