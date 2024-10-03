@@ -1,9 +1,10 @@
 # Client
-- [ ] basic tetris imlementation
-- [ ] record and replay an entire game
+- [x] basic tetris imlementation
+- [x] record and replay an entire game
+- [ ] game over condition
 
 # Server
-- [ ] serve static assets
+- [x] serve static assets
 - [ ] logging
 - [ ] accept new players and assign them to a game
 - [ ] relay state updates to players

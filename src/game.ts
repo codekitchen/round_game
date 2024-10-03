@@ -17,7 +17,7 @@ export class Game {
 
   reset() {
     this.tetris?.destroy();
-    this.tetris = new TetrisGame(12345);
+    this.tetris = new TetrisGame(124);
     this.frame = 0;
   }
 
