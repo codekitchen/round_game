@@ -1,0 +1,4 @@
+{
+  "livePreview.serverRoot": "dst/",
+  "livePreview.autoRefreshPreview": "On Changes to Saved Files"
+}
