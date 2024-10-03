@@ -19,7 +19,7 @@ function gameInit() {
   // called once after the engine starts up
   // setup the game
   setCanvasFixedSize(vec2(1280, 720));
-  let levelSize = game.grid.size;
+  let levelSize = game.tetris.size;
   setCameraPos(levelSize.scale(.5));
   // turn off collisions to avoid accidentally using them
   setEnablePhysicsSolver(false);
@@ -46,7 +46,7 @@ function gameRender() {
   // draw any background effects that appear behind objects
   drawRect(cameraPos, vec2(100), new Color(.5, .5, .5));
   // -.5 because the block locations are in the center of the block
-  drawRect(cameraPos.add(vec2(-.5)), game.grid.size, new Color(.1, .1, .1));
+  drawRect(cameraPos.add(vec2(-.5)), game.tetris.size, new Color(.1, .1, .1));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
