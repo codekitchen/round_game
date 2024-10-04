@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 	"log/slog"
 	"net"
@@ -26,11 +25,12 @@ func main() {
 // run starts a http.Server for the passed in address
 // with all requests handled by echoServer.
 func run() error {
-	if len(os.Args) < 2 {
-		return errors.New("please provide an address to listen on as the first argument")
+	listenAddr := "localhost:4011"
+	if len(os.Args) > 1 {
+		listenAddr = os.Args[1]
 	}
 
-	l, err := net.Listen("tcp", os.Args[1])
+	l, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return err
 	}
