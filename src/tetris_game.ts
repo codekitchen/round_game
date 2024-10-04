@@ -28,7 +28,6 @@ class Piece extends EngineObject {
     }
   }
   update() {
-    super.update();
     this.dropCounter++;
     const dropNow = (tetrisGame.dropFast && this.dropCounter > Piece.FAST_DROP_DELAY) || (this.dropCounter > this.dropDelay);
     if (dropNow) {
@@ -84,8 +83,10 @@ export class TetrisGame extends EngineObject {
   rand!: RandomGenerator;
   dropFast = false;
 
+  static GameSize = vec2(TetrisGame.WIDTH, TetrisGame.HEIGHT);
+
   constructor(seed: number) {
-    super(vec2(0), vec2(TetrisGame.WIDTH, TetrisGame.HEIGHT));
+    super(vec2(0), TetrisGame.GameSize);
     this.rand = new RandomGenerator(seed);
     this.dropFast = false;
     this.newPiece();

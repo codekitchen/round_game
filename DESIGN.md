@@ -32,7 +32,7 @@ frame the next event is going to fall on, or it may play past a frame and then
 receive an event for that now-in-the-past frame, so the game has to completely
 pause when the replay queue is empty. The plan is to define a number of frames
 that we will wait for data on before resuming. If we stall too often, we'll
-increase that number to buffer more, but intruduce more latency.
+increase that number to buffer more, but introduce more latency.
 
 ## Client-Server Comms
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -12,7 +13,9 @@ import (
 )
 
 func main() {
-	log.SetFlags(0)
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})))
 
 	err := run()
 	if err != nil {
@@ -35,9 +38,7 @@ func run() error {
 
 	handler := http.NewServeMux()
 	fs := http.FileServer(http.Dir("../dst/"))
-	handler.Handle("/ws", echoServer{
-		logf: log.Printf,
-	})
+	handler.Handle("/ws", gameServer{})
 	handler.Handle("/", fs)
 
 	s := &http.Server{

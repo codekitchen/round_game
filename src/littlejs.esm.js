@@ -5272,7 +5272,7 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
                 // update game and objects
                 inputUpdate();
                 gameUpdate();
-                engineObjectsUpdate();
+                // engineObjectsUpdate();
 
                 // do post update
                 debugUpdate();
