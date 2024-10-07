@@ -18,6 +18,7 @@ type game struct {
 	seed    int32
 	clients []*client
 	player  *client
+	events  [][]byte
 }
 
 var games = make(map[uuid.UUID]*game)
@@ -42,7 +43,15 @@ func (g *game) addClient(c *client) string {
 	return role
 }
 
+func (g *game) addEvent(msg []byte) {
+	g.events = append(g.events, msg)
+}
+
 func (g *game) gotMessage(source *client, msg []byte) {
+	// eventually we need to validate who sent the message,
+	// and we need to differentiate between messages that become part of the
+	// event log, vs other messages.
+	g.addEvent(msg)
 	// TODO: separate threads for writes to each client to avoid blocking
 	for _, c := range g.clients {
 		if c == source {

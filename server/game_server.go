@@ -39,6 +39,16 @@ func (s *gameServer) clientJoined(c *websocket.Conn, logger *slog.Logger) (*game
 		Seed: game.seed,
 		Role: role,
 	})
+	if role == "observer" && err == nil {
+		// replay past events to the new client
+		for _, msg := range game.events {
+			err = client.write(msg)
+			if err != nil {
+				slog.Error("failed to replay message", "err", err)
+				break
+			}
+		}
+	}
 	return game, err
 }
 

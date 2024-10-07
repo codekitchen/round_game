@@ -5,6 +5,7 @@ import { TetrisGame } from "./tetris_game.js"
 type Event = { type: string, frame: number };
 
 const HEARTBEAT_INTERVAL = 50; // max frames between an event
+const OBSERVER_DELAY = 30; // # of frames
 
 export class Game {
   tetris?: TetrisGame;
@@ -24,7 +25,9 @@ export class Game {
     console.log('game got message', data);
     if (data.type === 'gameStart') {
       this.reset(data.seed, data.role);
+      return
     }
+    this.recording.push(data)
   }
 
   reset(seed: number, role: 'player' | 'observer') {
@@ -93,19 +96,27 @@ export class Game {
   }
 
   replayFromRemote(events: Event[]) {
-    while (events.length > 0) {
-      const event = events.shift()!;
-      if (event.frame < this.frame) {
-        console.log('out of sync! got event for frame', event.frame, 'but expected', this.frame);
-        // TODO: should really abort the whole game here, there's no
-        // way to recover from this
-        continue;
+    if (events.length > 0) {
+      let horizonFrame = events[events.length - 1].frame
+      let fastTargetFrame = horizonFrame - OBSERVER_DELAY
+
+      while (events[0].frame < fastTargetFrame) {
+        // replay quickly to catch up
+        let event = events.shift()!;
+        while (this.frame < event.frame) {
+          engineObjectsUpdate();
+          this.frame++;
+        }
+        this.tetris!.processEvent(event as any);
       }
-      while (this.frame < event.frame) {
-        engineObjectsUpdate();
-        this.frame++;
+
+      // now we are caught up, replay in real time
+      engineObjectsUpdate();
+      this.frame++;
+      if (events.length > 0 && events[0].frame == this.frame) {
+        let event = events.shift()!;
+        this.tetris!.processEvent(event as any); // it'd be nice to avoid this any cast, but NBD
       }
-      this.tetris!.processEvent(event as any); // it'd be nice to avoid this any cast, but NBD
     }
   }
   startRecording() {

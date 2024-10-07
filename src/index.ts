@@ -1,5 +1,5 @@
 import { game } from "./game.js";
-import { cameraPos, Color, drawRect, engineInit, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, vec2 } from "./littlejs.esm.js";
+import { engineInit, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, vec2 } from "./littlejs.esm.js";
 import { TetrisGame } from "./tetris_game.js";
 
 declare global {
