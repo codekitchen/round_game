@@ -1,6 +1,6 @@
 export class ServerConnection {
   ws!: WebSocket
-  state: 'connecting' | 'connected' = 'connecting'
+  state: 'connecting' | 'connected' | 'disconnected' = 'connecting'
   onmessage?: (data: any) => void
   constructor() {
     this.connect()
@@ -22,9 +22,10 @@ export class ServerConnection {
   }
   onclose = () => {
     console.log('disconnected')
+    this.state = 'disconnected'
     // this.connect()
   }
-  send(ev: { type: "left" | "right" | "rotate" | "dropstart" | "dropstop"; frame: number }) {
+  send(ev: {frame: number}) {
     this.ws.send(JSON.stringify(ev))
   }
 }

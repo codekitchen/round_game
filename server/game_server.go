@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -20,7 +19,8 @@ func (s gameServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("accepted websocket", "conn", r.RemoteAddr)
 
-	game, err := s.joinGame(c)
+	logger := slog.With("conn", r.RemoteAddr)
+	game, err := s.clientJoined(c, logger)
 	if err != nil {
 		slog.Error("failed to join game", "err", err)
 		c.CloseNow()
@@ -29,32 +29,22 @@ func (s gameServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("new client joined game", "conn", r.RemoteAddr, "game", game.id)
 }
 
-func (s *gameServer) joinGame(c *websocket.Conn) (game *game, err error) {
-	// find or create a game
-	for _, g := range games {
-		game = g
-		break
-	}
-	if game == nil {
-		game = newGame()
-	}
+func (s *gameServer) clientJoined(c *websocket.Conn, logger *slog.Logger) (*game, error) {
+	game := findGame()
+	client := newClient(c, logger, game.gotMessage)
+	role := game.addClient(client)
 
-	client := newClient(c, game.gotMessage)
-	game.addClient(client)
-
-	role := "player"
-	if len(game.clients) > 1 {
-		role = "observer"
-	}
-	msg := gameStartMessage{
+	err := client.writeMessage(gameStartMessage{
 		Type: "gameStart",
 		Seed: game.seed,
 		Role: role,
+	})
+	return game, err
+}
+
+func findGame() *game {
+	for _, g := range games {
+		return g
 	}
-	buf, err := json.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-	err = client.write(buf)
-	return
+	return newGame()
 }

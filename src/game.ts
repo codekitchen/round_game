@@ -2,12 +2,15 @@ import { Color, drawTextScreen, engineObjectsUpdate, vec2, Vector2 } from "./lit
 import { ServerConnection } from "./server.js";
 import { TetrisGame } from "./tetris_game.js"
 
-type Event = { frame: number };
+type Event = { type: string, frame: number };
+
+const HEARTBEAT_INTERVAL = 50; // max frames between an event
 
 export class Game {
   tetris?: TetrisGame;
   // recording infra
   frame = 0;
+  lastEventFrame = 0;
   recording: Event[] = [];
   gameState: 'waiting' | 'playing' = 'waiting';
   recState: 'none' | 'recording' | 'replaying' = 'none';
@@ -28,7 +31,7 @@ export class Game {
     this.tetris?.destroy();
     this.tetris = new TetrisGame(seed);
     this.gameState = 'playing';
-    this.frame = 0;
+    this.frame = this.lastEventFrame = 0;
     if (role === 'player') {
       this.startRecording();
     } else {
@@ -37,11 +40,17 @@ export class Game {
   }
 
   render() {
+    drawTextScreen(`frame: ${this.frame}`, vec2(200, 25), 20, new Color(1, 1, 1));
+    drawTextScreen(`state: ${this.gameState}`, vec2(200, 45), 20, new Color(1, 1, 1));
+    let connState = '';
     if (this.server.state === 'connecting') {
-      drawTextScreen('Connecting...', vec2(200, 100), 25, new Color(1, 1, 1));
+      connState = 'Connecting...'
+    }  else if (this.server.state === 'disconnected') {
+      connState = 'Disconnected'
     } else {
-      drawTextScreen(`Connected for ${this.recState}`, vec2(200, 100), 25, new Color(1, 1, 1));
+      connState = `Connected for ${this.recState}`
     }
+    drawTextScreen(connState, vec2(200, 65), 20, new Color(1, 1, 1));
   }
 
   // the game state is never updated directly, we always
@@ -56,9 +65,16 @@ export class Game {
     if (this.recState === 'replaying') {
       return this.replayFromRemote(this.recording);
     }
-    const events = this.tetris!.currentEvents(this.frame);
+    const events = this.tetris!.currentEvents(this.frame) as Event[];
 
     if (this.recState === 'recording') {
+      if (events.length > 0)
+        this.lastEventFrame = this.frame;
+      if (this.frame - this.lastEventFrame > HEARTBEAT_INTERVAL) {
+        events.push({ type: 'heartbeat', frame: this.frame });
+        this.lastEventFrame = this.frame;
+      }
+
       this.recording.push(...events);
       for (let ev of events) {
         this.server.send(ev);

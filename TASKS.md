@@ -5,7 +5,7 @@
 
 # Server
 - [x] serve static assets
-- [ ] accept players and observers
+- [x] accept players and observers
 - [ ] stream events to observers from player
 - [ ] logging
 - [ ] accept new players and assign them to a game
