@@ -66,7 +66,7 @@ export class Game {
     }
 
     if (this.recState === 'replaying') {
-      return this.replayFromRemote(this.recording);
+      return this.replayFromRemote();
     }
     const events = this.tetris!.currentEvents(this.frame) as Event[];
 
@@ -95,7 +95,13 @@ export class Game {
     }
   }
 
-  replayFromRemote(events: Event[]) {
+  stepSimulation() {
+    engineObjectsUpdate();
+    this.frame++;
+  }
+
+  replayFromRemote() {
+    let events = this.recording
     if (events.length > 0) {
       let horizonFrame = events[events.length - 1].frame
       let fastTargetFrame = horizonFrame - OBSERVER_DELAY
@@ -104,15 +110,13 @@ export class Game {
         // replay quickly to catch up
         let event = events.shift()!;
         while (this.frame < event.frame) {
-          engineObjectsUpdate();
-          this.frame++;
+          this.stepSimulation();
         }
         this.tetris!.processEvent(event as any);
       }
 
       // now we are caught up, replay in real time
-      engineObjectsUpdate();
-      this.frame++;
+      this.stepSimulation();
       if (events.length > 0 && events[0].frame == this.frame) {
         let event = events.shift()!;
         this.tetris!.processEvent(event as any); // it'd be nice to avoid this any cast, but NBD

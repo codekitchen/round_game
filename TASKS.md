@@ -6,11 +6,11 @@
 # Server
 - [x] serve static assets
 - [x] accept players and observers
-- [ ] stream events to observers from player
+- [x] stream events to observers from player
+- [x] accept new players and assign them to a game
+- [x] relay state updates to players
+- [ ] choose next player on disconnect
 - [ ] logging
-- [ ] accept new players and assign them to a game
-- [ ] relay state updates to players
-- [ ] choose next player
 - [ ] save game recordings
 
 # Polish

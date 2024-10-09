@@ -12,14 +12,16 @@ import (
 type client struct {
 	ws     *websocket.Conn
 	logger *slog.Logger
-	cb     func(*client, []byte)
+	server *gameServer
+	game   gameID
 }
 
-func newClient(ws *websocket.Conn, logger *slog.Logger, cb func(*client, []byte)) *client {
+func newClient(ws *websocket.Conn, logger *slog.Logger, gs *gameServer, id gameID) *client {
 	c := &client{
 		ws:     ws,
 		logger: logger,
-		cb:     cb,
+		server: gs,
+		game:   id,
 	}
 	go c.run()
 	return c
@@ -31,10 +33,10 @@ func (c *client) run() {
 		err := c.readMessage()
 		if err != nil {
 			c.logger.Error("failed to read message", "err", err)
+			c.server.clientDisconnected(c, err)
 			break
 		}
 	}
-	// TODO: notify game server on client disconnect
 }
 
 func (c *client) readMessage() error {
@@ -47,7 +49,7 @@ func (c *client) readMessage() error {
 		return err
 	}
 	c.logger.Debug("received message", "msg", string(msg))
-	c.cb(c, msg)
+	c.server.clientGotMessage(c, msg)
 	return nil
 }
 
