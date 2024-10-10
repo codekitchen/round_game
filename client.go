@@ -12,18 +12,19 @@ import (
 type client struct {
 	ws     *websocket.Conn
 	logger *slog.Logger
-	server *gameServer
+	gm     *gameManager
 	game   gameID
 }
 
-func newClient(ws *websocket.Conn, logger *slog.Logger, gs *gameServer, id gameID) *client {
+func newClient(ws *websocket.Conn, logger *slog.Logger, gm *gameManager, id gameID) *client {
 	c := &client{
 		ws:     ws,
 		logger: logger,
-		server: gs,
+		gm:     gm,
 		game:   id,
 	}
 	go c.run()
+	c.logger.Info("new client joined game", "game", id)
 	return c
 }
 
@@ -33,7 +34,7 @@ func (c *client) run() {
 		err := c.readMessage()
 		if err != nil {
 			c.logger.Error("failed to read message", "err", err)
-			c.server.clientDisconnected(c, err)
+			c.gm.clientDisconnected(c, err)
 			break
 		}
 	}
@@ -49,7 +50,7 @@ func (c *client) readMessage() error {
 		return err
 	}
 	c.logger.Debug("received message", "msg", string(msg))
-	c.server.clientGotMessage(c, msg)
+	c.gm.clientGotMessage(c, msg)
 	return nil
 }
 

@@ -38,7 +38,7 @@ func run() error {
 
 	handler := http.NewServeMux()
 	fs := http.FileServer(http.Dir("web/dst/"))
-	handler.Handle("/ws", gameServer{})
+	handler.Handle("/ws", newWebsocketServer())
 	handler.Handle("/", fs)
 
 	s := &http.Server{

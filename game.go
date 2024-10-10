@@ -2,7 +2,6 @@ package main
 
 import (
 	"log/slog"
-	"math/rand/v2"
 
 	"github.com/google/uuid"
 )
@@ -21,19 +20,6 @@ type game struct {
 	clients map[*client]struct{}
 	player  *client
 	events  [][]byte
-}
-
-var games = make(map[uuid.UUID]*game)
-
-func newGame() *game {
-	id := uuid.New()
-	game := &game{
-		id:      id,
-		seed:    rand.Int32(),
-		clients: make(map[*client]struct{}),
-	}
-	games[id] = game
-	return game
 }
 
 func (g *game) addClient(c *client) string {
