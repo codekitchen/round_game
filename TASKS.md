@@ -9,9 +9,11 @@
 - [x] stream events to observers from player
 - [x] accept new players and assign them to a game
 - [x] relay state updates to players
-- [ ] choose next player on disconnect
+- [x] choose next player on disconnect
+- [x] save game recordings
 - [ ] logging
-- [ ] save game recordings
+- [ ] end game if no clients are connected
+- [ ] keep retrying when electing new player fails
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around

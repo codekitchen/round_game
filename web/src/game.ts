@@ -14,7 +14,8 @@ export class Game {
   lastEventFrame = 0;
   recording: Event[] = [];
   gameState: 'waiting' | 'playing' = 'waiting';
-  recState: 'none' | 'recording' | 'replaying' = 'none';
+  recState: 'recording' | 'replaying' = 'replaying';
+  role: 'player' | 'observer' = 'observer';
   server = new ServerConnection
 
   constructor() {
@@ -24,21 +25,27 @@ export class Game {
   onmessage = (data: any) => {
     console.log('game got message', data);
     if (data.type === 'gameStart') {
-      this.reset(data.seed, data.role);
+      this.reset(data.seed);
+      return
+    } else if (data.type === 'roleChange') {
+      this.changeRole(data.role);
       return
     }
     this.recording.push(data)
   }
 
-  reset(seed: number, role: 'player' | 'observer') {
+  reset(seed: number) {
     this.tetris?.destroy();
     this.tetris = new TetrisGame(seed);
     this.gameState = 'playing';
     this.frame = this.lastEventFrame = 0;
-    if (role === 'player') {
-      this.startRecording();
-    } else {
-      this.playbackRecording();
+  }
+
+  changeRole(role: 'player' | 'observer') {
+    this.role = role;
+    if (role === 'observer') {
+      // stop recording immediately
+      this.recState = 'replaying';
     }
   }
 
@@ -66,8 +73,14 @@ export class Game {
     }
 
     if (this.recState === 'replaying') {
-      return this.replayFromRemote();
+      this.replayFromRemote();
+      if (this.role === 'player' && this.recording.length === 0) {
+        // switch to recording mode because we're the player now
+        this.recState = 'recording'
+      }
+      return
     }
+
     const events = this.tetris!.currentEvents(this.frame) as Event[];
 
     if (this.recState === 'recording') {
@@ -122,21 +135,6 @@ export class Game {
         this.tetris!.processEvent(event as any); // it'd be nice to avoid this any cast, but NBD
       }
     }
-  }
-  startRecording() {
-    console.log('start recording');
-    this.recState = 'recording';
-    this.recording = [];
-  }
-  stopRecording() {
-    console.log('stop recording');
-    this.recState = 'none';
-    console.log(this.recording);
-  }
-  playbackRecording() {
-    console.log('replay recording');
-    // this.reset();
-    this.recState = 'replaying';
   }
   serializeVec2(v: Vector2) {
     return { x: v.x.toFixed(2), y: v.y.toFixed(2) };

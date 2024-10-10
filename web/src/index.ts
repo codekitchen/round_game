@@ -11,10 +11,6 @@ declare global {
   }
 }
 
-window.startRecording = () => game.startRecording();
-window.stopRecording = () => game.stopRecording();
-window.replayRecording = () => game.playbackRecording();
-
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit() {
   // called once after the engine starts up

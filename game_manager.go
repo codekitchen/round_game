@@ -15,23 +15,7 @@ type gameManager struct {
 func (gm *gameManager) clientJoined(c *websocket.Conn, logger *slog.Logger) error {
 	game := gm.findGame()
 	client := newClient(c, logger, gm, game.id)
-	role := game.addClient(client)
-
-	err := client.writeMessage(gameStartMessage{
-		Type: "gameStart",
-		Seed: game.seed,
-		Role: role,
-	})
-	if role == "observer" && err == nil {
-		// replay past events to the new client
-		for _, msg := range game.events {
-			err = client.write(msg)
-			if err != nil {
-				slog.Error("failed to replay message", "err", err)
-				break
-			}
-		}
-	}
+	err := game.addClient(client)
 	return err
 }
 
