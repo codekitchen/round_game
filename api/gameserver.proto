@@ -1,0 +1,38 @@
+syntax = "proto3";
+package gameserver;
+
+option go_package = "internal/protocol";
+
+enum Role {
+  ROLE_OBSERVER = 0;
+  ROLE_PLAYER = 1;
+}
+
+message GameMessage {
+  int32 frame = 1;
+  oneof msg {
+    // administrative events
+    GameInit gameInit = 2;
+    RoleChange roleChange = 3;
+    Heartbeat heartbeat = 4;
+
+    // game-specific events that the server doesn't parse
+    GameEvent gameEvent = 100;
+  }
+}
+
+// used to advance the frame count when nothing else has happened for a while
+message Heartbeat {
+}
+
+message GameInit {
+  int32 seed = 1;
+}
+
+message RoleChange {
+  Role role = 1;
+}
+
+message GameEvent {
+  string type = 1;
+}

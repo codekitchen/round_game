@@ -2,15 +2,6 @@ import { game } from "./game.js";
 import { engineInit, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, vec2 } from "./littlejs.esm.js";
 import { TetrisGame } from "./tetris_game.js";
 
-declare global {
-  interface Window {
-    c: HTMLCanvasElement;
-    startRecording: any;
-    stopRecording: any;
-    replayRecording: any;
-  }
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit() {
   // called once after the engine starts up

@@ -1,3 +1,5 @@
+import { gameserver } from "./protocol/gameserver.js"
+
 export class ServerConnection {
   ws!: WebSocket
   state: 'connecting' | 'connected' | 'disconnected' = 'connecting'
@@ -8,12 +10,14 @@ export class ServerConnection {
   connect() {
     this.state = 'connecting'
     this.ws = new WebSocket("/ws")
+    this.ws.binaryType = "arraybuffer"
     this.ws.onopen = this.onopen
     this.ws.onclose = this.onclose
     this.ws.onmessage = this.gotmessage
   }
   gotmessage = (ev: MessageEvent) => {
-    let data = JSON.parse(ev.data)
+    const rawdata = new Uint8Array(ev.data)
+    let data = gameserver.GameMessage.decode(rawdata)
     this.onmessage?.(data)
   }
   onopen = () => {
@@ -25,7 +29,7 @@ export class ServerConnection {
     this.state = 'disconnected'
     // this.connect()
   }
-  send(ev: {frame: number}) {
-    this.ws.send(JSON.stringify(ev))
+  send(ev: gameserver.GameMessage) {
+    this.ws.send(gameserver.GameMessage.encode(ev).finish())
   }
 }

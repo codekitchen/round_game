@@ -1,8 +1,7 @@
 import { Color, drawTextScreen, engineObjectsUpdate, vec2, Vector2 } from "./littlejs.esm.js";
+import { gameserver } from "./protocol/gameserver.js";
 import { ServerConnection } from "./server.js";
 import { TetrisGame } from "./tetris_game.js"
-
-type Event = { type: string, frame: number };
 
 const HEARTBEAT_INTERVAL = 50; // max frames between an event
 const OBSERVER_DELAY = 30; // # of frames
@@ -12,7 +11,7 @@ export class Game {
   // recording infra
   frame = 0;
   lastEventFrame = 0;
-  recording: Event[] = [];
+  recording: gameserver.GameMessage[] = [];
   gameState: 'waiting' | 'playing' = 'waiting';
   recState: 'recording' | 'replaying' = 'replaying';
   role: 'player' | 'observer' = 'observer';
@@ -81,13 +80,16 @@ export class Game {
       return
     }
 
-    const events = this.tetris!.currentEvents(this.frame) as Event[];
+    const events = this.tetris!.currentEvents().map(ev => gameserver.GameMessage.create({ frame: this.frame, gameEvent: ev }));
 
     if (this.recState === 'recording') {
       if (events.length > 0)
         this.lastEventFrame = this.frame;
       if (this.frame - this.lastEventFrame > HEARTBEAT_INTERVAL) {
-        events.push({ type: 'heartbeat', frame: this.frame });
+        events.push(gameserver.GameMessage.create({
+          frame: this.frame,
+          heartbeat: gameserver.Heartbeat.create(),
+        }))
         this.lastEventFrame = this.frame;
       }
 
@@ -101,10 +103,15 @@ export class Game {
     }
   }
 
-  replayLocally(events: Event[]) {
+  replayLocally(events: gameserver.GameMessage[]) {
     while (events.length > 0) {
       const event = events.shift()!;
-      this.tetris!.processEvent(event as any); // it'd be nice to avoid this any cast, but NBD
+      const gameEvent = event.gameEvent;
+      if (gameEvent) {
+        this.tetris!.processEvent(gameEvent as gameserver.GameEvent);
+      } else {
+        // process other events here, like heartbeats and player switches
+      }
     }
   }
 

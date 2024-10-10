@@ -4,7 +4,8 @@ import (
 	"log/slog"
 	"math/rand/v2"
 
-	"gameserver/util"
+	"github.com/codekitchen/roundgame/internal/protocol"
+	"github.com/codekitchen/roundgame/util"
 
 	"github.com/google/uuid"
 )
@@ -12,11 +13,12 @@ import (
 type gameID = uuid.UUID
 
 type game struct {
-	id      gameID
-	seed    int32
-	clients util.Set[*client]
-	player  *client
-	events  [][]byte
+	id              gameID
+	seed            int32
+	clients         util.Set[*client]
+	player          *client
+	events          []*protocol.GameMessage
+	mostRecentFrame int32
 }
 
 func newGame() *game {
@@ -30,30 +32,38 @@ func newGame() *game {
 
 func (g *game) addClient(c *client) error {
 	g.clients.Add(c)
-	role := "observer"
+	role := protocol.Role_ROLE_OBSERVER
 	if len(g.clients) == 1 {
 		g.player = c
-		role = "player"
+		role = protocol.Role_ROLE_PLAYER
 	}
-	err := c.writeMessage(gameStartMessage{
-		Type: "gameStart",
-		Seed: g.seed,
+	err := c.writeMessage(&protocol.GameMessage{
+		Frame: 0,
+		Msg: &protocol.GameMessage_GameInit{
+			GameInit: &protocol.GameInit{
+				Seed: g.seed,
+			},
+		},
 	})
 	if err != nil {
 		return err
 	}
-	err = c.writeMessage(roleChangeMessage{
-		Type: "roleChange",
-		Role: role,
+	err = c.writeMessage(&protocol.GameMessage{
+		Frame: 0,
+		Msg: &protocol.GameMessage_RoleChange{
+			RoleChange: &protocol.RoleChange{
+				Role: role,
+			},
+		},
 	})
 	if err != nil {
 		return err
 	}
 
-	if role == "observer" {
+	if role == protocol.Role_ROLE_OBSERVER {
 		// replay past events to the new client
 		for _, msg := range g.events {
-			err = c.write(msg)
+			err = c.writeMessage(msg)
 			if err != nil {
 				slog.Error("failed to replay message", "err", err)
 				break
@@ -74,28 +84,33 @@ func (g *game) clientDisconnected(c *client, _ error) {
 		}
 		g.player = newplayer
 		// TODO: if this fails, how do we handle it? find another new player I guess
-		newplayer.writeMessage(roleChangeMessage{
-			Type: "roleChange",
-			Role: "player",
+		newplayer.writeMessage(&protocol.GameMessage{
+			Frame: g.mostRecentFrame,
+			Msg: &protocol.GameMessage_RoleChange{
+				RoleChange: &protocol.RoleChange{
+					Role: protocol.Role_ROLE_PLAYER,
+				},
+			},
 		})
 	}
 }
 
-func (g *game) addEvent(msg []byte) {
+func (g *game) addEvent(msg *protocol.GameMessage) {
 	g.events = append(g.events, msg)
 }
 
-func (g *game) clientGotMessage(source *client, msg []byte) {
+func (g *game) gotClientMessage(source *client, msg *protocol.GameMessage) {
 	// eventually we need to validate who sent the message,
 	// and we need to differentiate between messages that become part of the
 	// event log, vs other messages.
 	g.addEvent(msg)
+	g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 	// TODO: separate threads for writes to each client to avoid blocking
 	for c := range g.clients {
 		if c == source {
 			continue
 		}
-		err := c.write(msg)
+		err := c.writeMessage(msg)
 		if err != nil {
 			slog.Error("failed to write message", "err", err)
 		}

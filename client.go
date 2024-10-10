@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 type client struct {
@@ -54,17 +55,22 @@ func (c *client) readMessage() error {
 	// defer cancel()
 	ctx := context.Background()
 
-	_, msg, err := c.ws.Read(ctx)
+	_, buf, err := c.ws.Read(ctx)
 	if err != nil {
 		return err
 	}
-	c.logger.Debug("received message", "msg", string(msg))
-	c.game.clientGotMessage(c, msg)
+	msg := &protocol.GameMessage{}
+	err = proto.Unmarshal(buf, msg)
+	if err != nil {
+		return err
+	}
+	c.logger.Debug("received message", "msg", msg)
+	c.game.gotClientMessage(c, msg)
 	return nil
 }
 
-func (c *client) writeMessage(msg any) error {
-	buf, err := json.Marshal(msg)
+func (c *client) writeMessage(msg *protocol.GameMessage) error {
+	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return err
 	}
@@ -75,5 +81,5 @@ func (c *client) write(buf []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
-	return c.ws.Write(ctx, websocket.MessageText, buf)
+	return c.ws.Write(ctx, websocket.MessageBinary, buf)
 }

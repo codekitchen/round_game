@@ -1,12 +1,9 @@
 import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2 } from "./littlejs.esm.js";
+import { gameserver } from "./protocol/gameserver.js";
 import { SHAPES, NUM_SHAPES } from "./shapes.js";
+type GameEvent = gameserver.GameEvent;
 
 var tetrisGame: TetrisGame;
-
-type GameEvent = {
-  type: 'left' | 'right' | 'rotate' | 'dropstart' | 'dropstop';
-  frame: number;
-};
 
 // One segment of a tetromino
 class Mino extends EngineObject {
@@ -160,7 +157,7 @@ export class TetrisGame extends EngineObject {
   isOccupied(pos: Vector2) {
     return this.grid[pos.y * TetrisGame.WIDTH + pos.x] !== undefined;
   }
-  processEvent(event: GameEvent) {
+  processEvent(event: gameserver.GameEvent) {
     if (event.type === 'left') {
       this.piece.tryMove(vec2(-1, 0));
     }
@@ -177,22 +174,25 @@ export class TetrisGame extends EngineObject {
       this.dropFast = false;
     }
   }
-  currentEvents(frame: number) {
+  newEvent(type: string) {
+      return gameserver.GameEvent.create({ type })
+  }
+  currentEvents() {
     let events: GameEvent[] = [];
     if (keyWasReleased('ArrowLeft')) {
-      events.push({ type: 'left', frame });
+      events.push(this.newEvent('left'));
     }
     if (keyWasReleased('ArrowRight')) {
-      events.push({ type: 'right', frame });
+      events.push(this.newEvent('right'));
     }
     if (keyWasReleased('ArrowUp')) {
-      events.push({ type: 'rotate', frame });
+      events.push(this.newEvent('rotate'));
     }
     if (keyWasPressed('ArrowDown')) {
-      events.push({ type: 'dropstart', frame });
+      events.push(this.newEvent('dropstart'));
     }
     if (keyWasReleased('ArrowDown')) {
-      events.push({ type: 'dropstop', frame });
+      events.push(this.newEvent('dropstop'));
     }
     return events;
   }

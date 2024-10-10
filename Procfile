@@ -1,2 +1,2 @@
-web: cd web && ./node_modules/.bin/tsc --watch --preserveWatchOutput
+web: cd web && npm run dev
 server: air
