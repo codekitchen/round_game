@@ -3,7 +3,7 @@ import { gameserver } from "./protocol/gameserver.js"
 export class ServerConnection {
   ws!: WebSocket
   state: 'connecting' | 'connected' | 'disconnected' = 'connecting'
-  onmessage?: (data: any) => void
+  onmessage?: (data: gameserver.GameMessage) => void
   constructor() {
     this.connect()
   }

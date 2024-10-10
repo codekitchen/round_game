@@ -7,6 +7,7 @@ export default {
   input: 'src/index.ts',
   output: {
     file: 'dst/bundle/index.js',
+    sourcemap: true,
     format: 'es'
   },
   plugins: [
