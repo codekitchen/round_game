@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"math/rand/v2"
 
 	"gameserver/util"
 
@@ -16,6 +17,15 @@ type game struct {
 	clients util.Set[*client]
 	player  *client
 	events  [][]byte
+}
+
+func newGame() *game {
+	id := uuid.New()
+	return &game{
+		id:      id,
+		seed:    rand.Int32(),
+		clients: make(util.Set[*client]),
+	}
 }
 
 func (g *game) addClient(c *client) error {
@@ -53,7 +63,7 @@ func (g *game) addClient(c *client) error {
 	return err
 }
 
-func (g *game) removeClient(c *client) {
+func (g *game) clientDisconnected(c *client, _ error) {
 	g.clients.Remove(c)
 	if g.player == c {
 		// we need to find a new player, this one left
@@ -75,7 +85,7 @@ func (g *game) addEvent(msg []byte) {
 	g.events = append(g.events, msg)
 }
 
-func (g *game) gotMessage(source *client, msg []byte) {
+func (g *game) clientGotMessage(source *client, msg []byte) {
 	// eventually we need to validate who sent the message,
 	// and we need to differentiate between messages that become part of the
 	// event log, vs other messages.

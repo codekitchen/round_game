@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -12,19 +13,17 @@ import (
 type client struct {
 	ws     *websocket.Conn
 	logger *slog.Logger
-	gm     *gameManager
-	game   gameID
+	game   *game
 }
 
-func newClient(ws *websocket.Conn, logger *slog.Logger, gm *gameManager, id gameID) *client {
+func newClient(ws *websocket.Conn, logger *slog.Logger, game *game) *client {
 	c := &client{
 		ws:     ws,
 		logger: logger,
-		gm:     gm,
-		game:   id,
+		game:   game,
 	}
 	go c.run()
-	c.logger.Info("new client joined game", "game", id)
+	c.logger.Info("new client joined game", "game", game.id)
 	return c
 }
 
@@ -33,11 +32,21 @@ func (c *client) run() {
 	for {
 		err := c.readMessage()
 		if err != nil {
-			c.logger.Error("failed to read message", "err", err)
-			c.gm.clientDisconnected(c, err)
+			err = fmt.Errorf("failed to read message: %w", err)
+			c.disconnect(err)
 			break
 		}
 	}
+}
+
+func (c *client) disconnect(err error) {
+	defer c.ws.CloseNow()
+	if err == nil {
+		c.logger.Debug("client disconnect")
+	} else {
+		c.logger.Error("client error, disconnecting", "err", err)
+	}
+	c.game.clientDisconnected(c, err)
 }
 
 func (c *client) readMessage() error {
@@ -50,7 +59,7 @@ func (c *client) readMessage() error {
 		return err
 	}
 	c.logger.Debug("received message", "msg", string(msg))
-	c.gm.clientGotMessage(c, msg)
+	c.game.clientGotMessage(c, msg)
 	return nil
 }
 

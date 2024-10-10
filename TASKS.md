@@ -11,9 +11,11 @@
 - [x] relay state updates to players
 - [x] choose next player on disconnect
 - [x] save game recordings
+- [ ] switch players
 - [ ] logging
 - [ ] end game if no clients are connected
 - [ ] keep retrying when electing new player fails
+- [ ] timeout player quickly (2s?) if unresponsive, to keep the game moving
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around
