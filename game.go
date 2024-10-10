@@ -3,31 +3,23 @@ package main
 import (
 	"log/slog"
 
+	"gameserver/util"
+
 	"github.com/google/uuid"
 )
 
 type gameID = uuid.UUID
 
-type gameStartMessage struct {
-	Type string `json:"type"`
-	Seed int32  `json:"seed"`
-}
-
-type roleChangeMessage struct {
-	Type string `json:"type"`
-	Role string `json:"role"` // "player" or "observer"
-}
-
 type game struct {
-	id      uuid.UUID
+	id      gameID
 	seed    int32
-	clients map[*client]struct{}
+	clients util.Set[*client]
 	player  *client
 	events  [][]byte
 }
 
 func (g *game) addClient(c *client) error {
-	g.clients[c] = struct{}{}
+	g.clients.Add(c)
 	role := "observer"
 	if len(g.clients) == 1 {
 		g.player = c
@@ -62,14 +54,10 @@ func (g *game) addClient(c *client) error {
 }
 
 func (g *game) removeClient(c *client) {
-	delete(g.clients, c)
+	g.clients.Remove(c)
 	if g.player == c {
 		// we need to find a new player, this one left
-		var newplayer *client
-		for c2 := range g.clients {
-			newplayer = c2
-			break
-		}
+		newplayer, _ := g.clients.First()
 		if newplayer == nil {
 			// TODO: no clients for this game anymore
 			return

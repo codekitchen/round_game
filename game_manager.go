@@ -9,7 +9,13 @@ import (
 )
 
 type gameManager struct {
-	games map[uuid.UUID]*game
+	games map[gameID]*game
+}
+
+func newGameManager() *gameManager {
+	return &gameManager{
+		games: make(map[gameID]*game),
+	}
 }
 
 func (gm *gameManager) clientJoined(c *websocket.Conn, logger *slog.Logger) error {

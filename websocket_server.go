@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/coder/websocket"
-	"github.com/google/uuid"
 )
 
 type websocketServer struct {
@@ -14,9 +13,7 @@ type websocketServer struct {
 
 func newWebsocketServer() *websocketServer {
 	return &websocketServer{
-		gm: &gameManager{
-			games: make(map[uuid.UUID]*game),
-		},
+		gm: newGameManager(),
 	}
 }
 
