@@ -37,7 +37,7 @@ func run() error {
 	log.Printf("listening on http://%v", l.Addr())
 
 	handler := http.NewServeMux()
-	fs := http.FileServer(http.Dir("../dst/"))
+	fs := http.FileServer(http.Dir("web/dst/"))
 	handler.Handle("/ws", gameServer{})
 	handler.Handle("/", fs)
 
