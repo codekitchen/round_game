@@ -1,0 +1,4 @@
+.vscode
+tmp
+web/node_modules
+web/dst/bundle
