@@ -80,13 +80,13 @@ func (g *game) addClient(c *client) error {
 func (g *game) clientDisconnected(c *client, _ error) {
 	g.logger.Debug("client disconnected", "client", c)
 	if c == g.player.Value {
-		g.chooseNextPlayer()
+		g.chooseNextPlayer(g.mostRecentFrame)
 	}
 	node := g.clients.Find(func(v *client) bool { return c == v })
 	g.clients.Remove(node)
 }
 
-func (g *game) chooseNextPlayer() {
+func (g *game) chooseNextPlayer(frame int32) {
 	prev := g.player
 	g.player = g.player.NextOrFront()
 	if g.player == nil || g.player == prev {
@@ -96,26 +96,21 @@ func (g *game) chooseNextPlayer() {
 	}
 	g.logger.Info("new player selected", "player", g.player.Value)
 	// TODO: if this fails, how do we handle it? find another new player I guess
-	g.player.Value.writeMessage(&protocol.GameMessage{
-		Frame: g.mostRecentFrame,
-		Msg: &protocol.GameMessage_RoleChange{
-			RoleChange: &protocol.RoleChange{
-				Role: protocol.Role_ROLE_PLAYER,
-			},
-		},
-	})
+	g.changeRole(g.player.Value, protocol.Role_ROLE_PLAYER, frame)
 }
 
 func (g *game) addEvent(msg *protocol.GameMessage) {
 	g.events = append(g.events, msg)
+	g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 }
 
 func (g *game) gotClientMessage(source *client, msg *protocol.GameMessage) {
-	// eventually we need to validate who sent the message,
-	// and we need to differentiate between messages that become part of the
-	// event log, vs other messages.
+	if msg.GetPassControl() != nil {
+		g.handlePassControlMessage(source, msg)
+		return
+	}
+
 	g.addEvent(msg)
-	g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 	// TODO: separate threads for writes to each client to avoid blocking
 	for c := range g.clients.All() {
 		if c == source {
@@ -125,5 +120,27 @@ func (g *game) gotClientMessage(source *client, msg *protocol.GameMessage) {
 		if err != nil {
 			slog.Error("failed to write message", "err", err)
 		}
+	}
+}
+
+func (g *game) handlePassControlMessage(source *client, msg *protocol.GameMessage) {
+	if source != g.player.Value {
+		g.logger.Info("ignoring pass control message from non-player", "msg", msg, "source", source)
+		return
+	}
+	g.chooseNextPlayer(msg.Frame)
+}
+
+func (g *game) changeRole(c *client, role protocol.Role, frame int32) {
+	err := c.writeMessage(&protocol.GameMessage{
+		Frame: frame,
+		Msg: &protocol.GameMessage_RoleChange{
+			RoleChange: &protocol.RoleChange{
+				Role: role,
+			},
+		},
+	})
+	if err != nil {
+		slog.Error("failed to change role", "err", err)
 	}
 }

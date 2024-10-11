@@ -1,4 +1,4 @@
-import { Color, drawTextScreen, engineObjectsUpdate, vec2, Vector2 } from "./littlejs.esm.js";
+import { Color, drawTextScreen, engineObjectsUpdate, frame, vec2, Vector2 } from "./littlejs.esm.js";
 import { gameserver } from "./protocol/gameserver.js";
 import { ServerConnection } from "./server.js";
 import { TetrisGame } from "./tetris_game.js"
@@ -14,6 +14,7 @@ export class Game {
   recording: gameserver.GameMessage[] = [];
   gameState: 'waiting' | 'playing' = 'waiting';
   role = gameserver.Role.ROLE_OBSERVER;
+  nextRole: null | gameserver.Role = null
   server = new ServerConnection
 
   constructor() {
@@ -31,10 +32,16 @@ export class Game {
   }
 
   passControl = () => {
+    if (this.role != gameserver.Role.ROLE_PLAYER) {
+      return
+    }
     this.server.send(gameserver.GameMessage.create({
       frame: this.frame,
       passControl: gameserver.PassControl.create(),
     }))
+    // need to immediately switch roles, so that we don't keep
+    // advancing the simulation as if we were still the player
+    this.role = gameserver.Role.ROLE_OBSERVER
   }
 
   reset(seed: number) {
@@ -86,11 +93,14 @@ export class Game {
       this.lastEventFrame = this.frame;
     }
 
-    this.recording.push(...events);
     for (let ev of events) {
       this.server.send(ev);
     }
     this.replayLocally(events);
+    // this smells bad -- if we switched to observer during this frame,
+    // don't advance the simulation until we're told to do so
+    if (this.role !== gameserver.Role.ROLE_PLAYER)
+      return
     this.stepSimulation();
   }
 
@@ -104,6 +114,10 @@ export class Game {
   stepSimulation() {
     engineObjectsUpdate();
     this.frame++;
+    if (this.nextRole) {
+      this.role = this.nextRole
+      this.nextRole = null
+    }
   }
 
   replayFromRemote() {
@@ -122,7 +136,7 @@ export class Game {
       }
 
       // now we are caught up, replay in real time
-      while (events.length > 0 && events[0].frame == this.frame) {
+      while (events.length > 0 && events[0].frame <= this.frame) {
         let event = events.shift()!;
         this.handleEvent(event);
       }
@@ -131,8 +145,13 @@ export class Game {
   }
 
   handleEvent(event: gameserver.GameMessage) {
+    if (event.frame < this.frame) {
+      console.error('got event for previous frame', { event, frame: this.frame })
+      return
+    }
+    console.log('handling event', { event, frame: this.frame })
     if (event.roleChange) {
-      this.role = event.roleChange.role!
+      this.nextRole = event.roleChange.role!
     } else if (event.gameEvent) {
       this.tetris!.processEvent(event.gameEvent as gameserver.GameEvent);
     }

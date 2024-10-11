@@ -11,7 +11,7 @@
 - [x] relay state updates to players
 - [x] choose next player on disconnect
 - [x] save game recordings
-- [ ] switch players
+- [x] switch players
 - [ ] logging
 - [ ] end game if no clients are connected
 - [ ] keep retrying when electing new player fails
@@ -19,6 +19,7 @@
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around
+- [ ] auto stop dropping (holding down arrow) when switching players
 - [ ] hold down left/right to move, not just tap
 - [ ] Player username and emoji avatar
 - [ ] Show position in the queue and notify when they're next
@@ -28,3 +29,6 @@
 # Deploy
 - [ ] Deploy to an instance, probably Fargate. Use aws copilot?
 - [ ] Will need HTTPS, so SSL cert. roundrobin.codekitchen.net?
+
+# Refactor
+- [ ] client role handling is smelly
