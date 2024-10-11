@@ -80,18 +80,18 @@ func (g *game) addClient(c *client) error {
 func (g *game) clientDisconnected(c *client, _ error) {
 	g.logger.Debug("client disconnected", "client", c)
 	if c == g.player.Value {
-		g.chooseNextPlayer(g.mostRecentFrame)
+		g.chooseNextPlayer(g.mostRecentFrame, false)
 	}
 	node := g.clients.Find(func(v *client) bool { return c == v })
 	g.clients.Remove(node)
 }
 
-func (g *game) chooseNextPlayer(frame int32) {
+func (g *game) chooseNextPlayer(frame int32, allowSame bool) {
 	prev := g.player
 	g.player = g.player.NextOrFront()
-	if g.player == nil || g.player == prev {
+	if g.player == nil || (!allowSame && g.player == prev) {
 		// no more clients right now, nothing we can do but wait
-		g.logger.Info("no more clients, waiting for new player")
+		g.logger.Info("no more clients")
 		return
 	}
 	g.logger.Info("new player selected", "player", g.player.Value)
@@ -128,7 +128,8 @@ func (g *game) handlePassControlMessage(source *client, msg *protocol.GameMessag
 		g.logger.Info("ignoring pass control message from non-player", "msg", msg, "source", source)
 		return
 	}
-	g.chooseNextPlayer(msg.Frame)
+	// next player controls the next frame, not the current frame
+	g.chooseNextPlayer(msg.Frame+1, true)
 }
 
 func (g *game) changeRole(c *client, role protocol.Role, frame int32) {

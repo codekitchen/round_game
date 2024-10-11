@@ -13,7 +13,7 @@
 - [x] save game recordings
 - [x] switch players
 - [ ] logging
-- [ ] end game if no clients are connected
+- [ ] end game if no clients are connected for N seconds
 - [ ] keep retrying when electing new player fails
 - [ ] timeout player quickly (2s?) if unresponsive, to keep the game moving
 
@@ -31,4 +31,4 @@
 - [ ] Will need HTTPS, so SSL cert. roundrobin.codekitchen.net?
 
 # Refactor
-- [ ] client role handling is smelly
+- [x] client role handling is smelly

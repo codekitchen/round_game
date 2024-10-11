@@ -14,7 +14,6 @@ export class Game {
   recording: gameserver.GameMessage[] = [];
   gameState: 'waiting' | 'playing' = 'waiting';
   role = gameserver.Role.ROLE_OBSERVER;
-  nextRole: null | gameserver.Role = null
   server = new ServerConnection
 
   constructor() {
@@ -97,10 +96,6 @@ export class Game {
       this.server.send(ev);
     }
     this.replayLocally(events);
-    // this smells bad -- if we switched to observer during this frame,
-    // don't advance the simulation until we're told to do so
-    if (this.role !== gameserver.Role.ROLE_PLAYER)
-      return
     this.stepSimulation();
   }
 
@@ -114,10 +109,6 @@ export class Game {
   stepSimulation() {
     engineObjectsUpdate();
     this.frame++;
-    if (this.nextRole) {
-      this.role = this.nextRole
-      this.nextRole = null
-    }
   }
 
   replayFromRemote() {
@@ -151,7 +142,7 @@ export class Game {
     }
     console.log('handling event', { event, frame: this.frame })
     if (event.roleChange) {
-      this.nextRole = event.roleChange.role!
+      this.role = event.roleChange.role!
     } else if (event.gameEvent) {
       this.tetris!.processEvent(event.gameEvent as gameserver.GameEvent);
     }
