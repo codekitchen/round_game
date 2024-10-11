@@ -59,8 +59,10 @@ export class Game {
       connState = 'Connecting...'
     }  else if (this.server.state === 'disconnected') {
       connState = 'Disconnected'
+    } else if (this.role === gameserver.Role.ROLE_PLAYER) {
+      connState = `YOUR TURN!`
     } else {
-      connState = `Connected as ${this.role}`
+      connState = `Waiting for your turn...`
     }
     drawTextScreen(connState, vec2(200, 65), 20, new Color(1, 1, 1));
   }
