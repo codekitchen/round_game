@@ -12,7 +12,7 @@
 - [x] choose next player on disconnect
 - [x] save game recordings
 - [x] switch players
-- [ ] logging
+- [x] logging
 - [ ] end game if no clients are connected for N seconds
 - [ ] keep retrying when electing new player fails
 - [ ] timeout player quickly (2s?) if unresponsive, to keep the game moving

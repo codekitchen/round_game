@@ -13,7 +13,7 @@ type websocketServer struct {
 
 func newWebsocketServer() *websocketServer {
 	return &websocketServer{
-		gm: newGameManager(slog.Default()),
+		gm: newGameManager(),
 	}
 }
 
@@ -26,8 +26,7 @@ func (s websocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("accepted websocket", "conn", r.RemoteAddr)
 
-	logger := slog.With("conn", r.RemoteAddr)
-	err = s.gm.clientJoined(c, logger)
+	err = s.gm.clientJoined(c, r.RemoteAddr)
 	if err != nil {
 		slog.Error("failed to join game", "err", err)
 		c.CloseNow()

@@ -11,20 +11,19 @@ import (
 // one game at a time.
 
 type gameManager struct {
-	games  map[gameID]*game
-	logger *slog.Logger
+	games map[gameID]*game
 }
 
-func newGameManager(l *slog.Logger) *gameManager {
+func newGameManager() *gameManager {
 	return &gameManager{
-		games:  make(map[gameID]*game),
-		logger: l,
+		games: make(map[gameID]*game),
 	}
 }
 
-func (gm *gameManager) clientJoined(c *websocket.Conn, logger *slog.Logger) error {
+func (gm *gameManager) clientJoined(c *websocket.Conn, id string) error {
 	game := gm.findGame()
-	client := newClient(c, logger, game)
+	logger := slog.With("client", id)
+	client := newClient(c, id, logger, game)
 	err := game.addClient(client)
 	return err
 }
@@ -34,7 +33,7 @@ func (gm *gameManager) findGame() *game {
 		return g
 	}
 	// no games currently, start a new one
-	g := newGame(gm.logger)
+	g := newGame()
 	gm.games[g.id] = g
 	return g
 }

@@ -12,13 +12,19 @@ import (
 )
 
 type client struct {
+	id     string
 	ws     *websocket.Conn
 	logger *slog.Logger
 	game   *game
 }
 
-func newClient(ws *websocket.Conn, logger *slog.Logger, game *game) *client {
+func (c *client) String() string {
+	return c.id
+}
+
+func newClient(ws *websocket.Conn, id string, logger *slog.Logger, game *game) *client {
 	c := &client{
+		id:     id,
 		ws:     ws,
 		logger: logger,
 		game:   game,
@@ -64,7 +70,7 @@ func (c *client) readMessage() error {
 	if err != nil {
 		return err
 	}
-	c.logger.Debug("received message", "msg", msg)
+	c.logger.Debug("received message", "gamemessage", msg)
 	c.game.gotClientMessage(c, msg)
 	return nil
 }

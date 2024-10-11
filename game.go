@@ -22,25 +22,19 @@ type game struct {
 	logger          *slog.Logger
 }
 
-func newGame(l *slog.Logger) *game {
+func newGame() *game {
 	id := uuid.New()
 	return &game{
 		id:      id,
 		seed:    rand.Int32(),
 		clients: list.New[*client](),
-		logger:  l.With("game", id),
+		logger:  slog.Default().With("game", id),
 	}
 }
 
 func (g *game) addClient(c *client) error {
 	g.logger.Debug("new client joined game", "client", c)
 	node := g.clients.InsertBefore(c, g.player)
-	role := protocol.Role_ROLE_OBSERVER
-	if g.player == nil {
-		g.logger.Debug("promoting new client to player", "client", c)
-		g.player = node
-		role = protocol.Role_ROLE_PLAYER
-	}
 	err := c.writeMessage(&protocol.GameMessage{
 		Frame: 0,
 		Msg: &protocol.GameMessage_GameInit{
@@ -52,28 +46,33 @@ func (g *game) addClient(c *client) error {
 	if err != nil {
 		return err
 	}
-	err = c.writeMessage(&protocol.GameMessage{
-		Frame: 0,
-		Msg: &protocol.GameMessage_RoleChange{
-			RoleChange: &protocol.RoleChange{
-				Role: role,
-			},
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	if role == protocol.Role_ROLE_OBSERVER {
-		// replay past events to the new client
-		for _, msg := range g.events {
-			err = c.writeMessage(msg)
-			if err != nil {
-				slog.Error("failed to replay message", "err", err)
-				break
-			}
+	// replay past events to the new client
+	// need to start as observer, replay all existing messages, and then switch to
+	// player
+	for _, msg := range g.events {
+		err = c.writeMessage(msg)
+		if err != nil {
+			slog.Error("failed to replay message", "err", err)
+			return err
 		}
 	}
+	if g.player == nil {
+		g.logger.Debug("promoting new client to player", "client", c)
+		g.player = node
+
+		err = c.writeMessage(&protocol.GameMessage{
+			Frame: g.mostRecentFrame + 1,
+			Msg: &protocol.GameMessage_RoleChange{
+				RoleChange: &protocol.RoleChange{
+					Role: protocol.Role_ROLE_PLAYER,
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
@@ -91,10 +90,11 @@ func (g *game) chooseNextPlayer(frame int32, allowSame bool) {
 	g.player = g.player.NextOrFront()
 	if g.player == nil || (!allowSame && g.player == prev) {
 		// no more clients right now, nothing we can do but wait
+		g.player = nil
 		g.logger.Info("no more clients")
 		return
 	}
-	g.logger.Info("new player selected", "player", g.player.Value)
+	g.logger.Debug("new player selected", "player", g.player.Value)
 	// TODO: if this fails, how do we handle it? find another new player I guess
 	g.changeRole(g.player.Value, protocol.Role_ROLE_PLAYER, frame)
 }
