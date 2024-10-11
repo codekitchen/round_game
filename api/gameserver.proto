@@ -15,6 +15,7 @@ message GameMessage {
     GameInit gameInit = 2;
     RoleChange roleChange = 3;
     Heartbeat heartbeat = 4;
+    PassControl passControl = 5;
 
     // game-specific events that the server doesn't parse
     GameEvent gameEvent = 100;
@@ -35,4 +36,7 @@ message RoleChange {
 
 message GameEvent {
   string type = 1;
+}
+
+message PassControl {
 }

@@ -30,9 +30,17 @@ export class Game {
     this.recording.push(data)
   }
 
+  passControl = () => {
+    this.server.send(gameserver.GameMessage.create({
+      frame: this.frame,
+      passControl: gameserver.PassControl.create(),
+    }))
+  }
+
   reset(seed: number) {
     this.tetris?.destroy();
     this.tetris = new TetrisGame(seed);
+    this.tetris.passControlCB = this.passControl;
     this.gameState = 'playing';
     this.frame = this.lastEventFrame = 0;
   }
@@ -65,7 +73,8 @@ export class Game {
       return
     }
 
-    const events = this.tetris!.currentEvents().map(ev => gameserver.GameMessage.create({ frame: this.frame, gameEvent: ev }));
+    const gameEvents = this.tetris!.currentEvents();
+    const events = gameEvents.map(ev => gameserver.GameMessage.create({ frame: this.frame, gameEvent: ev }));
 
     if (events.length > 0)
       this.lastEventFrame = this.frame;

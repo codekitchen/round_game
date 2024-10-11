@@ -40,6 +40,7 @@ export const gameserver = $root.gameserver = (() => {
          * @property {gameserver.IGameInit|null} [gameInit] GameMessage gameInit
          * @property {gameserver.IRoleChange|null} [roleChange] GameMessage roleChange
          * @property {gameserver.IHeartbeat|null} [heartbeat] GameMessage heartbeat
+         * @property {gameserver.IPassControl|null} [passControl] GameMessage passControl
          * @property {gameserver.IGameEvent|null} [gameEvent] GameMessage gameEvent
          */
 
@@ -91,6 +92,14 @@ export const gameserver = $root.gameserver = (() => {
         GameMessage.prototype.heartbeat = null;
 
         /**
+         * GameMessage passControl.
+         * @member {gameserver.IPassControl|null|undefined} passControl
+         * @memberof gameserver.GameMessage
+         * @instance
+         */
+        GameMessage.prototype.passControl = null;
+
+        /**
          * GameMessage gameEvent.
          * @member {gameserver.IGameEvent|null|undefined} gameEvent
          * @memberof gameserver.GameMessage
@@ -103,12 +112,12 @@ export const gameserver = $root.gameserver = (() => {
 
         /**
          * GameMessage msg.
-         * @member {"gameInit"|"roleChange"|"heartbeat"|"gameEvent"|undefined} msg
+         * @member {"gameInit"|"roleChange"|"heartbeat"|"passControl"|"gameEvent"|undefined} msg
          * @memberof gameserver.GameMessage
          * @instance
          */
         Object.defineProperty(GameMessage.prototype, "msg", {
-            get: $util.oneOfGetter($oneOfFields = ["gameInit", "roleChange", "heartbeat", "gameEvent"]),
+            get: $util.oneOfGetter($oneOfFields = ["gameInit", "roleChange", "heartbeat", "passControl", "gameEvent"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -144,6 +153,8 @@ export const gameserver = $root.gameserver = (() => {
                 $root.gameserver.RoleChange.encode(message.roleChange, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
             if (message.heartbeat != null && Object.hasOwnProperty.call(message, "heartbeat"))
                 $root.gameserver.Heartbeat.encode(message.heartbeat, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+            if (message.passControl != null && Object.hasOwnProperty.call(message, "passControl"))
+                $root.gameserver.PassControl.encode(message.passControl, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
             if (message.gameEvent != null && Object.hasOwnProperty.call(message, "gameEvent"))
                 $root.gameserver.GameEvent.encode(message.gameEvent, writer.uint32(/* id 100, wireType 2 =*/802).fork()).ldelim();
             return writer;
@@ -194,6 +205,10 @@ export const gameserver = $root.gameserver = (() => {
                     }
                 case 4: {
                         message.heartbeat = $root.gameserver.Heartbeat.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 5: {
+                        message.passControl = $root.gameserver.PassControl.decode(reader, reader.uint32());
                         break;
                     }
                 case 100: {
@@ -267,6 +282,16 @@ export const gameserver = $root.gameserver = (() => {
                         return "heartbeat." + error;
                 }
             }
+            if (message.passControl != null && message.hasOwnProperty("passControl")) {
+                if (properties.msg === 1)
+                    return "msg: multiple values";
+                properties.msg = 1;
+                {
+                    let error = $root.gameserver.PassControl.verify(message.passControl);
+                    if (error)
+                        return "passControl." + error;
+                }
+            }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
                 if (properties.msg === 1)
                     return "msg: multiple values";
@@ -309,6 +334,11 @@ export const gameserver = $root.gameserver = (() => {
                     throw TypeError(".gameserver.GameMessage.heartbeat: object expected");
                 message.heartbeat = $root.gameserver.Heartbeat.fromObject(object.heartbeat);
             }
+            if (object.passControl != null) {
+                if (typeof object.passControl !== "object")
+                    throw TypeError(".gameserver.GameMessage.passControl: object expected");
+                message.passControl = $root.gameserver.PassControl.fromObject(object.passControl);
+            }
             if (object.gameEvent != null) {
                 if (typeof object.gameEvent !== "object")
                     throw TypeError(".gameserver.GameMessage.gameEvent: object expected");
@@ -348,6 +378,11 @@ export const gameserver = $root.gameserver = (() => {
                 object.heartbeat = $root.gameserver.Heartbeat.toObject(message.heartbeat, options);
                 if (options.oneofs)
                     object.msg = "heartbeat";
+            }
+            if (message.passControl != null && message.hasOwnProperty("passControl")) {
+                object.passControl = $root.gameserver.PassControl.toObject(message.passControl, options);
+                if (options.oneofs)
+                    object.msg = "passControl";
             }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
                 object.gameEvent = $root.gameserver.GameEvent.toObject(message.gameEvent, options);
@@ -1187,6 +1222,181 @@ export const gameserver = $root.gameserver = (() => {
         };
 
         return GameEvent;
+    })();
+
+    gameserver.PassControl = (function() {
+
+        /**
+         * Properties of a PassControl.
+         * @memberof gameserver
+         * @interface IPassControl
+         */
+
+        /**
+         * Constructs a new PassControl.
+         * @memberof gameserver
+         * @classdesc Represents a PassControl.
+         * @implements IPassControl
+         * @constructor
+         * @param {gameserver.IPassControl=} [properties] Properties to set
+         */
+        function PassControl(properties) {
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Creates a new PassControl instance using the specified properties.
+         * @function create
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {gameserver.IPassControl=} [properties] Properties to set
+         * @returns {gameserver.PassControl} PassControl instance
+         */
+        PassControl.create = function create(properties) {
+            return new PassControl(properties);
+        };
+
+        /**
+         * Encodes the specified PassControl message. Does not implicitly {@link gameserver.PassControl.verify|verify} messages.
+         * @function encode
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {gameserver.IPassControl} message PassControl message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        PassControl.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified PassControl message, length delimited. Does not implicitly {@link gameserver.PassControl.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {gameserver.IPassControl} message PassControl message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        PassControl.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a PassControl message from the specified reader or buffer.
+         * @function decode
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gameserver.PassControl} PassControl
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        PassControl.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.PassControl();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a PassControl message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gameserver.PassControl} PassControl
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        PassControl.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a PassControl message.
+         * @function verify
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        PassControl.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            return null;
+        };
+
+        /**
+         * Creates a PassControl message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gameserver.PassControl} PassControl
+         */
+        PassControl.fromObject = function fromObject(object) {
+            if (object instanceof $root.gameserver.PassControl)
+                return object;
+            return new $root.gameserver.PassControl();
+        };
+
+        /**
+         * Creates a plain object from a PassControl message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {gameserver.PassControl} message PassControl
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        PassControl.toObject = function toObject() {
+            return {};
+        };
+
+        /**
+         * Converts this PassControl to JSON.
+         * @function toJSON
+         * @memberof gameserver.PassControl
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        PassControl.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for PassControl
+         * @function getTypeUrl
+         * @memberof gameserver.PassControl
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        PassControl.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/gameserver.PassControl";
+        };
+
+        return PassControl;
     })();
 
     return gameserver;

@@ -79,6 +79,7 @@ export class TetrisGame extends EngineObject {
   piece!: Piece;
   rand!: RandomGenerator;
   dropFast = false;
+  passControlCB?: () => void
 
   static GameSize = vec2(TetrisGame.WIDTH, TetrisGame.HEIGHT);
 
@@ -90,7 +91,6 @@ export class TetrisGame extends EngineObject {
     tetrisGame = this; // implicit singleton
   }
   newPiece() {
-    // temporary, eventually we'll do this elsewhere
     const type = this.rand.int(NUM_SHAPES);
     this.piece = new Piece(type);
     this.addChild(this.piece, vec2(4, 19));
@@ -121,6 +121,8 @@ export class TetrisGame extends EngineObject {
     }
     this.checkForScoring();
     this.newPiece();
+    if (this.passControlCB)
+      this.passControlCB();
   }
   checkForScoring() {
     for (let y = 0; y < TetrisGame.HEIGHT; y++) {

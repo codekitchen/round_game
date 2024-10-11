@@ -24,6 +24,9 @@ export namespace gameserver {
         /** GameMessage heartbeat */
         heartbeat?: (gameserver.IHeartbeat|null);
 
+        /** GameMessage passControl */
+        passControl?: (gameserver.IPassControl|null);
+
         /** GameMessage gameEvent */
         gameEvent?: (gameserver.IGameEvent|null);
     }
@@ -49,11 +52,14 @@ export namespace gameserver {
         /** GameMessage heartbeat. */
         public heartbeat?: (gameserver.IHeartbeat|null);
 
+        /** GameMessage passControl. */
+        public passControl?: (gameserver.IPassControl|null);
+
         /** GameMessage gameEvent. */
         public gameEvent?: (gameserver.IGameEvent|null);
 
         /** GameMessage msg. */
-        public msg?: ("gameInit"|"roleChange"|"heartbeat"|"gameEvent");
+        public msg?: ("gameInit"|"roleChange"|"heartbeat"|"passControl"|"gameEvent");
 
         /**
          * Creates a new GameMessage instance using the specified properties.
@@ -509,6 +515,97 @@ export namespace gameserver {
 
         /**
          * Gets the default type url for GameEvent
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a PassControl. */
+    interface IPassControl {
+    }
+
+    /** Represents a PassControl. */
+    class PassControl implements IPassControl {
+
+        /**
+         * Constructs a new PassControl.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: gameserver.IPassControl);
+
+        /**
+         * Creates a new PassControl instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns PassControl instance
+         */
+        public static create(properties?: gameserver.IPassControl): gameserver.PassControl;
+
+        /**
+         * Encodes the specified PassControl message. Does not implicitly {@link gameserver.PassControl.verify|verify} messages.
+         * @param message PassControl message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: gameserver.IPassControl, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified PassControl message, length delimited. Does not implicitly {@link gameserver.PassControl.verify|verify} messages.
+         * @param message PassControl message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: gameserver.IPassControl, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a PassControl message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns PassControl
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gameserver.PassControl;
+
+        /**
+         * Decodes a PassControl message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns PassControl
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gameserver.PassControl;
+
+        /**
+         * Verifies a PassControl message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a PassControl message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns PassControl
+         */
+        public static fromObject(object: { [k: string]: any }): gameserver.PassControl;
+
+        /**
+         * Creates a plain object from a PassControl message. Also converts values to other types if specified.
+         * @param message PassControl
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: gameserver.PassControl, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this PassControl to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for PassControl
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */
