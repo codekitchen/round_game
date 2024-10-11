@@ -13,7 +13,7 @@ type websocketServer struct {
 
 func newWebsocketServer() *websocketServer {
 	return &websocketServer{
-		gm: newGameManager(),
+		gm: newGameManager(slog.Default()),
 	}
 }
 

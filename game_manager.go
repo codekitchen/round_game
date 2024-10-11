@@ -11,12 +11,14 @@ import (
 // one game at a time.
 
 type gameManager struct {
-	games map[gameID]*game
+	games  map[gameID]*game
+	logger *slog.Logger
 }
 
-func newGameManager() *gameManager {
+func newGameManager(l *slog.Logger) *gameManager {
 	return &gameManager{
-		games: make(map[gameID]*game),
+		games:  make(map[gameID]*game),
+		logger: l,
 	}
 }
 
@@ -32,7 +34,7 @@ func (gm *gameManager) findGame() *game {
 		return g
 	}
 	// no games currently, start a new one
-	g := newGame()
+	g := newGame(gm.logger)
 	gm.games[g.id] = g
 	return g
 }
