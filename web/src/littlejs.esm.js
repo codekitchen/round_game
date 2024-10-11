@@ -1,4 +1,7 @@
 // LittleJS - MIT License - Copyright 2021 Frank Force
+// Modifications for round_game by Brian:
+// - removed the call to engineObjectsUpdate in the game loop,
+//   so that game.ts can control when time moves forward
 
 'use strict';
 
