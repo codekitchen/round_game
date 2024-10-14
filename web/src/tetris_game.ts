@@ -1,4 +1,4 @@
-import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2 } from "./littlejs.esm.js";
+import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown } from "./littlejs.esm.js";
 import { gameserver } from "./protocol/gameserver.js";
 import { SHAPES, NUM_SHAPES } from "./shapes.js";
 type GameEvent = gameserver.GameEvent;
@@ -193,7 +193,7 @@ export class TetrisGame extends EngineObject {
     if (keyWasPressed('ArrowDown')) {
       events.push(this.newEvent('dropstart'));
     }
-    if (keyWasReleased('ArrowDown')) {
+    if (this.dropFast && !keyIsDown('ArrowDown')) {
       events.push(this.newEvent('dropstop'));
     }
     return events;
