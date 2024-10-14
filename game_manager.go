@@ -4,8 +4,9 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
+
+	"github.com/codekitchen/roundgame/internal/client"
 )
 
 // eventually this will have more logic around capping # of clients in a game,
@@ -30,19 +31,10 @@ func newGameManager() *gameManager {
 }
 
 // This gets called directly from the HTTP handler on multiple goroutines, so we need locking
-func (gm *gameManager) clientJoined(ws *websocket.Conn, id string) {
+func (gm *gameManager) clientJoined(ws *websocket.Conn) {
 	game := gm.findGame()
-	logger := slog.With("client", id)
-	client := &client{
-		ID:       id,
-		ws:       ws,
-		logger:   logger,
-		received: game.fromClients,
-		sending:  make(chan *protocol.GameMessage),
-		stop:     make(chan struct{}),
-	}
-	go client.loop()
-	game.AddClient(client)
+	c := client.New(ws, game.fromClients, game.logger)
+	game.AddClient(c)
 }
 
 func (gm *gameManager) findGame() *game {

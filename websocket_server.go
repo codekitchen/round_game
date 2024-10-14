@@ -26,5 +26,5 @@ func (s websocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("accepted websocket", "conn", r.RemoteAddr)
 
-	s.gm.clientJoined(c, r.RemoteAddr)
+	s.gm.clientJoined(c)
 }

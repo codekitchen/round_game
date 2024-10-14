@@ -1,37 +1,34 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"math/rand/v2"
+	"sync/atomic"
 	"time"
 
+	"github.com/codekitchen/roundgame/internal/client"
 	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/codekitchen/roundgame/util/list"
-
-	"github.com/google/uuid"
 )
 
-type gameID = uuid.UUID
-
-type clientMessage struct {
-	c   *client
-	msg *protocol.GameMessage
-	err error
-}
+type gameID = string
 
 type game struct {
 	id              gameID
 	seed            int32
-	clients         *list.List[*client]
-	player          *list.Node[*client]
+	clients         *list.List[*client.Client]
+	player          *list.Node[*client.Client]
 	events          []*protocol.GameMessage
 	mostRecentFrame int32
 	logger          *slog.Logger
 
 	stop        chan struct{}
-	fromClients chan clientMessage
-	newClients  chan *client
+	fromClients chan client.ClientMessage
+	newClients  chan *client.Client
 }
+
+var nextGameID atomic.Uint32
 
 // game events:
 // - client joined
@@ -42,16 +39,16 @@ type game struct {
 // - Close was called, end game and notify/disconnect all clients
 
 func newGame() *game {
-	id := uuid.New()
+	id := fmt.Sprintf("%d", nextGameID.Add(1))
 	return &game{
 		id:      id,
 		seed:    rand.Int32(),
-		clients: list.New[*client](),
+		clients: list.New[*client.Client](),
 		logger:  slog.Default().With("game", id),
 
 		stop:        make(chan struct{}),
-		fromClients: make(chan clientMessage),
-		newClients:  make(chan *client),
+		fromClients: make(chan client.ClientMessage),
+		newClients:  make(chan *client.Client),
 	}
 }
 
@@ -71,11 +68,11 @@ loop:
 			g.addClient(c)
 			endGame = nil
 		case fc := <-g.fromClients:
-			if fc.err != nil {
-				g.dropClient(fc.c)
+			if fc.Err != nil {
+				g.dropClient(fc.C)
 				break
 			}
-			g.gotClientMessage(fc.c, fc.msg)
+			g.gotClientMessage(fc.C, fc.Msg)
 		case <-endGame:
 			g.logger.Debug("no players, ending game")
 			g.Stop()
@@ -100,19 +97,19 @@ func (g *game) shutdown() {
 	}
 }
 
-func (g *game) dropClient(c *client) {
+func (g *game) dropClient(c *client.Client) {
 	c.Stop()
 	g.clientDisconnected(c)
 }
 
-func (g *game) AddClient(c *client) {
+func (g *game) AddClient(c *client.Client) {
 	g.newClients <- c
 }
 
-func (g *game) addClient(c *client) {
+func (g *game) addClient(c *client.Client) {
 	g.logger.Debug("new client joined game", "client", c)
 	node := g.clients.InsertBefore(c, g.player)
-	c.sendMessage(&protocol.GameMessage{
+	c.SendMessage(&protocol.GameMessage{
 		Frame: 0,
 		Msg: &protocol.GameMessage_GameInit{
 			GameInit: &protocol.GameInit{
@@ -126,13 +123,13 @@ func (g *game) addClient(c *client) {
 	// need to start as observer, replay all existing messages, and then switch to
 	// player
 	for _, msg := range g.events {
-		c.sendMessage(msg)
+		c.SendMessage(msg)
 	}
 	if g.player == nil {
 		g.logger.Debug("promoting new client to player", "client", c)
 		g.player = node
 
-		c.sendMessage(&protocol.GameMessage{
+		c.SendMessage(&protocol.GameMessage{
 			Frame: g.mostRecentFrame + 1,
 			Msg: &protocol.GameMessage_RoleChange{
 				RoleChange: &protocol.RoleChange{
@@ -143,12 +140,11 @@ func (g *game) addClient(c *client) {
 	}
 }
 
-func (g *game) clientDisconnected(c *client) {
-	g.logger.Debug("client disconnected", "client", c)
+func (g *game) clientDisconnected(c *client.Client) {
 	if g.player != nil && c == g.player.Value {
 		g.chooseNextPlayer(g.mostRecentFrame, false)
 	}
-	node := g.clients.Find(func(v *client) bool { return c == v })
+	node := g.clients.Find(func(v *client.Client) bool { return c == v })
 	g.clients.Remove(node)
 }
 
@@ -170,7 +166,7 @@ func (g *game) addEvent(msg *protocol.GameMessage) {
 	g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 }
 
-func (g *game) gotClientMessage(source *client, msg *protocol.GameMessage) {
+func (g *game) gotClientMessage(source *client.Client, msg *protocol.GameMessage) {
 	if msg.GetPassControl() != nil {
 		g.handlePassControlMessage(source, msg)
 		return
@@ -186,11 +182,11 @@ func (g *game) gotClientMessage(source *client, msg *protocol.GameMessage) {
 		if c == source {
 			continue
 		}
-		c.sendMessage(msg)
+		c.SendMessage(msg)
 	}
 }
 
-func (g *game) handlePassControlMessage(source *client, msg *protocol.GameMessage) {
+func (g *game) handlePassControlMessage(source *client.Client, msg *protocol.GameMessage) {
 	if source != g.player.Value {
 		g.logger.Info("ignoring pass control message from non-player", "msg", msg, "source", source)
 		return
@@ -199,8 +195,8 @@ func (g *game) handlePassControlMessage(source *client, msg *protocol.GameMessag
 	g.chooseNextPlayer(msg.Frame+1, true)
 }
 
-func (g *game) changeRole(c *client, role protocol.Role, frame int32) {
-	c.sendMessage(&protocol.GameMessage{
+func (g *game) changeRole(c *client.Client, role protocol.Role, frame int32) {
+	c.SendMessage(&protocol.GameMessage{
 		Frame: frame,
 		Msg: &protocol.GameMessage_RoleChange{
 			RoleChange: &protocol.RoleChange{

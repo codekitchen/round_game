@@ -1,8 +1,10 @@
-package main
+package client
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/codekitchen/roundgame/internal/protocol"
@@ -10,14 +12,37 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type client struct {
-	ID     string `json:"id"`
+type ClientMessage struct {
+	C   *Client
+	Msg *protocol.GameMessage
+	Err error
+}
+
+type Client struct {
+	ID     string
 	ws     *websocket.Conn
 	logger *slog.Logger
 
-	received chan<- clientMessage
+	received chan<- ClientMessage
 	sending  chan *protocol.GameMessage
 	stop     chan struct{}
+}
+
+var nextClientID atomic.Uint32
+
+func New(ws *websocket.Conn, received chan ClientMessage, logger *slog.Logger) *Client {
+	id := fmt.Sprintf("%d", nextClientID.Add(1))
+	c := &Client{
+		ID:     id,
+		ws:     ws,
+		logger: logger.With("client", id),
+
+		received: received,
+		sending:  make(chan *protocol.GameMessage),
+		stop:     make(chan struct{}),
+	}
+	go c.loop()
+	return c
 }
 
 // client events:
@@ -26,15 +51,15 @@ type client struct {
 // - message waiting to write
 // - error while reading or writing (timeout or other), need to disconnect and notify owner (game)
 
-func (c *client) String() string {
+func (c *Client) String() string {
 	return c.ID
 }
 
-func (c *client) Stop() {
+func (c *Client) Stop() {
 	close(c.stop)
 }
 
-func (c *client) loop() {
+func (c *Client) loop() {
 	defer c.ws.CloseNow()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -46,11 +71,11 @@ func (c *client) loop() {
 	c.logger.Debug("client disconnected")
 }
 
-func (c *client) readLoop(ctx context.Context) {
+func (c *Client) readLoop(ctx context.Context) {
 	for {
 		msg, err := c.readMessage(ctx)
 		select {
-		case c.received <- clientMessage{c, msg, err}:
+		case c.received <- ClientMessage{c, msg, err}:
 		case <-c.stop:
 			return
 		}
@@ -60,7 +85,7 @@ func (c *client) readLoop(ctx context.Context) {
 	}
 }
 
-func (c *client) writeLoop(ctx context.Context) {
+func (c *Client) writeLoop(ctx context.Context) {
 	for {
 		select {
 		case msg := <-c.sending:
@@ -68,7 +93,7 @@ func (c *client) writeLoop(ctx context.Context) {
 			if err != nil {
 				select {
 				// write errors get sent to the receiving queue
-				case c.received <- clientMessage{c, nil, err}:
+				case c.received <- ClientMessage{c, nil, err}:
 				case <-c.stop:
 					return
 				}
@@ -79,7 +104,7 @@ func (c *client) writeLoop(ctx context.Context) {
 	}
 }
 
-func (c *client) readMessage(ctx context.Context) (*protocol.GameMessage, error) {
+func (c *Client) readMessage(ctx context.Context) (*protocol.GameMessage, error) {
 	_, buf, err := c.ws.Read(ctx)
 	if err != nil {
 		return nil, err
@@ -92,14 +117,14 @@ func (c *client) readMessage(ctx context.Context) (*protocol.GameMessage, error)
 	return msg, nil
 }
 
-func (c *client) sendMessage(msg *protocol.GameMessage) {
+func (c *Client) SendMessage(msg *protocol.GameMessage) {
 	select {
 	case c.sending <- msg:
 	case <-c.stop:
 	}
 }
 
-func (c *client) writeMessage(ctx context.Context, msg *protocol.GameMessage) error {
+func (c *Client) writeMessage(ctx context.Context, msg *protocol.GameMessage) error {
 	// writes should happen quickly, unless buffers are way full, so timeout quickly
 	ctx, cancel := context.WithTimeout(ctx, time.Second*1)
 	defer cancel()
