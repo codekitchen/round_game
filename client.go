@@ -18,6 +18,12 @@ type client struct {
 	game   *game
 }
 
+// client events:
+// - client read a message
+// - Close was called, time to disconnect
+// - message waiting to write
+// - error while reading or writing (timeout or other), need to disconnect and notify owner (game)
+
 func (c *client) String() string {
 	return c.id
 }

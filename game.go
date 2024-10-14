@@ -30,6 +30,14 @@ type game struct {
 	fromClients chan clientMessage
 }
 
+// game events:
+// - client joined
+// - client tells us it is disconnecting
+// - client read a new message
+// - game is ending, notify and disconnect all clients
+// - write message to all clients, sometimes excluding the source client
+// - Close was called, end game and notify/disconnect all clients
+
 func newGame() *game {
 	id := uuid.New()
 	return &game{

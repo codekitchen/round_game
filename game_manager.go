@@ -14,6 +14,12 @@ type gameManager struct {
 	games map[gameID]*game
 }
 
+// game manager events
+// - find game for new client
+// - create new game
+// - game has ended, error or otherwise
+// - server is shutting down
+
 func newGameManager() *gameManager {
 	return &gameManager{
 		games: make(map[gameID]*game),
