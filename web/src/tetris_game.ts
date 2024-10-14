@@ -1,4 +1,4 @@
-import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown } from "./littlejs.esm.js";
+import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown, cameraPos, drawRect, Color } from "./littlejs.esm.js";
 import { gameserver } from "./protocol/gameserver.js";
 import { SHAPES, NUM_SHAPES } from "./shapes.js";
 type GameEvent = gameserver.GameEvent;
@@ -95,7 +95,11 @@ export class TetrisGame extends EngineObject {
     this.piece = new Piece(type);
     this.addChild(this.piece, vec2(4, 19));
   }
-  render() { }
+  render() {
+    // draw the background
+    drawRect(cameraPos, vec2(100), new Color(.5, .5, .5));
+    drawRect(cameraPos.add(vec2(-.5)), this.size, new Color(.1, .1, .1));
+  }
   addMino(c: Mino, pos: Vector2) {
     this.addChild(c, pos);
     this.grid[pos.y * TetrisGame.WIDTH + pos.x] = c;

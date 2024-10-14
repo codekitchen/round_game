@@ -52,7 +52,7 @@ export class Game {
     this.role = gameserver.Role.ROLE_OBSERVER;
   }
 
-  render() {
+  renderPost() {
     drawTextScreen(`frame: ${this.frame}`, vec2(200, 25), 20, new Color(1, 1, 1));
     drawTextScreen(`state: ${this.gameState}`, vec2(200, 45), 20, new Color(1, 1, 1));
     let connState = '';
