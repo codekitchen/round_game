@@ -5,3 +5,5 @@ Experiments with a massively multiplayer round-robin co-op game. For [Recurse F2
 Server is golang, client is browser-based, in typescript.
 
 Readme is TODO, obv.
+
+The WIP is live at https://roundgame.codekitchen.net/
