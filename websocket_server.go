@@ -20,7 +20,7 @@ func newWebsocketServer() *websocketServer {
 func (s websocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
 	if err != nil {
-		slog.Error("failed to accept websocket", "err", err)
+		slog.Debug("failed to accept websocket", "err", err)
 		return
 	}
 
@@ -28,7 +28,7 @@ func (s websocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = s.gm.clientJoined(c, r.RemoteAddr)
 	if err != nil {
-		slog.Error("failed to join game", "err", err)
+		slog.Debug("failed to join game", "err", err)
 		c.CloseNow()
 	}
 }

@@ -2,6 +2,7 @@
 - [x] basic tetris imlementation
 - [x] record and replay an entire game
 - [ ] game over condition
+- [ ] mobile support? would need virtual keyboard etc
 
 # Server
 - [x] serve static assets
@@ -19,16 +20,19 @@
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around
-- [ ] auto stop dropping (holding down arrow) when switching players
+- [x] auto stop dropping (holding down arrow) when switching players
 - [ ] hold down left/right to move, not just tap
 - [ ] Player username and emoji avatar
 - [ ] Show position in the queue and notify when they're next
 - [ ] Handle too many players joining (100 max?)
 - [ ] Show some basic stats
+- [ ] Better graphics!
+- [ ] More juice!
 
 # Deploy
-- [ ] Deploy to an instance, probably Fargate. Use aws copilot?
-- [ ] Will need HTTPS, so SSL cert. roundrobin.codekitchen.net?
+- [x] Deploy to an instance, probably Fargate. Use aws copilot?
+- [x] Switch from copilot+Fargate to just an EC2 instance, deploys are way too slow.
+- [x] Will need HTTPS, so SSL cert. roundrobin.codekitchen.net?
 
 # Refactor
 - [x] client role handling is smelly
