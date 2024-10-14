@@ -30,7 +30,12 @@ func (gm *gameManager) clientJoined(c *websocket.Conn, id string) error {
 
 func (gm *gameManager) findGame() *game {
 	for _, g := range gm.games {
-		return g
+		// this is a hacky temporary workaround to start a new game by not returning games
+		// where all clients have already disconnected. obviously, this doesn't clean up
+		// the game resources and isn't the permanent solution.
+		if g.clients.Len() > 0 {
+			return g
+		}
 	}
 	// no games currently, start a new one
 	g := newGame()
