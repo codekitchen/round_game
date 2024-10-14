@@ -30,6 +30,10 @@ func (c *client) String() string {
 	return c.ID
 }
 
+func (c *client) Stop() {
+	close(c.stop)
+}
+
 func (c *client) loop() {
 	defer c.ws.CloseNow()
 	ctx, cancel := context.WithCancel(context.Background())

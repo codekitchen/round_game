@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"math/rand/v2"
+	"time"
 
 	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/codekitchen/roundgame/util/list"
@@ -29,6 +30,7 @@ type game struct {
 
 	stop        chan struct{}
 	fromClients chan clientMessage
+	newClients  chan *client
 }
 
 // game events:
@@ -49,25 +51,62 @@ func newGame() *game {
 
 		stop:        make(chan struct{}),
 		fromClients: make(chan clientMessage),
+		newClients:  make(chan *client),
 	}
 }
 
 func (g *game) loop() error {
+	defer g.shutdown()
+	var endGame <-chan time.Time
+
 loop:
 	for {
+		if g.player == nil && endGame == nil {
+			// no players, start timer to end game
+			endGame = time.After(time.Second * 10)
+		}
+
 		select {
+		case c := <-g.newClients:
+			g.addClient(c)
+			endGame = nil
 		case fc := <-g.fromClients:
 			if fc.err != nil {
-				close(fc.c.stop)
-				g.clientDisconnected(fc.c, fc.err)
+				g.dropClient(fc.c)
 				break
 			}
 			g.gotClientMessage(fc.c, fc.msg)
+		case <-endGame:
+			g.logger.Debug("no players, ending game")
+			g.Stop()
 		case <-g.stop:
 			break loop
 		}
 	}
+
 	return nil
+}
+
+func (g *game) Stop() {
+	close(g.stop)
+}
+
+func (g *game) shutdown() {
+	g.logger.Debug("shutting down game")
+	g.player = nil
+	for n := g.clients.Front(); n != nil; n = g.clients.Front() {
+		n.Value.Stop()
+		g.clients.Remove(n)
+	}
+}
+
+func (g *game) dropClient(c *client) {
+	c.Stop()
+	g.clientDisconnected(c)
+}
+
+func (g *game) AddClient(c *client) {
+	g.newClients <- c
 }
 
 func (g *game) addClient(c *client) {
@@ -104,7 +143,7 @@ func (g *game) addClient(c *client) {
 	}
 }
 
-func (g *game) clientDisconnected(c *client, _ error) {
+func (g *game) clientDisconnected(c *client) {
 	g.logger.Debug("client disconnected", "client", c)
 	if g.player != nil && c == g.player.Value {
 		g.chooseNextPlayer(g.mostRecentFrame, false)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"sync"
 
 	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
@@ -12,6 +13,7 @@ import (
 // one game at a time.
 
 type gameManager struct {
+	sync.RWMutex
 	games map[gameID]*game
 }
 
@@ -27,6 +29,7 @@ func newGameManager() *gameManager {
 	}
 }
 
+// This gets called directly from the HTTP handler on multiple goroutines, so we need locking
 func (gm *gameManager) clientJoined(ws *websocket.Conn, id string) {
 	game := gm.findGame()
 	logger := slog.With("client", id)
@@ -39,21 +42,46 @@ func (gm *gameManager) clientJoined(ws *websocket.Conn, id string) {
 		stop:     make(chan struct{}),
 	}
 	go client.loop()
-	game.addClient(client)
+	game.AddClient(client)
 }
 
 func (gm *gameManager) findGame() *game {
-	for _, g := range gm.games {
-		// this is a hacky temporary workaround to start a new game by not returning games
-		// where all clients have already disconnected. obviously, this doesn't clean up
-		// the game resources and isn't the permanent solution.
-		if g.clients.Len() > 0 {
-			return g
-		}
+	g := gm.findExistingGame()
+	if g != nil {
+		return g
 	}
+
 	// no games currently, start a new one
-	g := newGame()
-	go g.loop()
+	gm.Lock()
+	defer gm.Unlock()
+
+	g = newGame()
 	gm.games[g.id] = g
+	go gm.runGame(g)
 	return g
+}
+
+func (gm *gameManager) findExistingGame() *game {
+	gm.RLock()
+	defer gm.RUnlock()
+
+	for _, g := range gm.games {
+		// just pick the first game returned for now
+		return g
+	}
+	return nil
+}
+
+func (gm *gameManager) runGame(g *game) {
+	err := g.loop()
+	if err == nil {
+		slog.Debug("game loop ended", "game", g.id)
+	} else {
+		slog.Error("game loop failed", "game", g.id, "err", err)
+	}
+
+	gm.Lock()
+	defer gm.Unlock()
+
+	delete(gm.games, g.id)
 }
