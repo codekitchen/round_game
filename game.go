@@ -73,7 +73,7 @@ loop:
 func (g *game) addClient(c *client) {
 	g.logger.Debug("new client joined game", "client", c)
 	node := g.clients.InsertBefore(c, g.player)
-	c.writeMessage(&protocol.GameMessage{
+	c.sendMessage(&protocol.GameMessage{
 		Frame: 0,
 		Msg: &protocol.GameMessage_GameInit{
 			GameInit: &protocol.GameInit{
@@ -87,13 +87,13 @@ func (g *game) addClient(c *client) {
 	// need to start as observer, replay all existing messages, and then switch to
 	// player
 	for _, msg := range g.events {
-		c.writeMessage(msg)
+		c.sendMessage(msg)
 	}
 	if g.player == nil {
 		g.logger.Debug("promoting new client to player", "client", c)
 		g.player = node
 
-		c.writeMessage(&protocol.GameMessage{
+		c.sendMessage(&protocol.GameMessage{
 			Frame: g.mostRecentFrame + 1,
 			Msg: &protocol.GameMessage_RoleChange{
 				RoleChange: &protocol.RoleChange{
@@ -106,7 +106,7 @@ func (g *game) addClient(c *client) {
 
 func (g *game) clientDisconnected(c *client, _ error) {
 	g.logger.Debug("client disconnected", "client", c)
-	if c == g.player.Value {
+	if g.player != nil && c == g.player.Value {
 		g.chooseNextPlayer(g.mostRecentFrame, false)
 	}
 	node := g.clients.Find(func(v *client) bool { return c == v })
@@ -123,7 +123,6 @@ func (g *game) chooseNextPlayer(frame int32, allowSame bool) {
 		return
 	}
 	g.logger.Debug("new player selected", "player", g.player.Value)
-	// TODO: if this fails, how do we handle it? find another new player I guess
 	g.changeRole(g.player.Value, protocol.Role_ROLE_PLAYER, frame)
 }
 
@@ -138,13 +137,17 @@ func (g *game) gotClientMessage(source *client, msg *protocol.GameMessage) {
 		return
 	}
 
-	g.addEvent(msg)
+	// don't add things like heartbeats to the replay log
+	if msg.GetGameEvent() != nil {
+		g.addEvent(msg)
+	}
+
 	// TODO: separate threads for writes to each client to avoid blocking
 	for c := range g.clients.All() {
 		if c == source {
 			continue
 		}
-		c.writeMessage(msg)
+		c.sendMessage(msg)
 	}
 }
 
@@ -158,7 +161,7 @@ func (g *game) handlePassControlMessage(source *client, msg *protocol.GameMessag
 }
 
 func (g *game) changeRole(c *client, role protocol.Role, frame int32) {
-	c.writeMessage(&protocol.GameMessage{
+	c.sendMessage(&protocol.GameMessage{
 		Frame: frame,
 		Msg: &protocol.GameMessage_RoleChange{
 			RoleChange: &protocol.RoleChange{

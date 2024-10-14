@@ -4,6 +4,8 @@ export class ServerConnection {
   ws!: WebSocket
   state: 'connecting' | 'connected' | 'disconnected' = 'connecting'
   onmessage?: (data: gameserver.GameMessage) => void
+  ondisconnect?: () => void
+
   constructor() {
     this.connect()
   }
@@ -27,6 +29,7 @@ export class ServerConnection {
   onclose = () => {
     console.log('disconnected')
     this.state = 'disconnected'
+    this.ondisconnect?.()
     // this.connect()
   }
   send(ev: gameserver.GameMessage) {

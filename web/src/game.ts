@@ -17,7 +17,8 @@ export class Game {
   server = new ServerConnection
 
   constructor() {
-    this.server.onmessage = this.onmessage.bind(this);
+    this.server.onmessage = this.onmessage
+    this.server.ondisconnect = this.ondisconnect
   }
 
   onmessage = (data: gameserver.GameMessage) => {
@@ -28,6 +29,10 @@ export class Game {
       return
     }
     this.recording.push(data)
+  }
+
+  ondisconnect = () => {
+    this.recording = []
   }
 
   passControl = () => {

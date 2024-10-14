@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
@@ -59,7 +60,7 @@ func (c *client) writeLoop(ctx context.Context) {
 	for {
 		select {
 		case msg := <-c.sending:
-			err := c.writeMessageReal(ctx, msg)
+			err := c.writeMessage(ctx, msg)
 			if err != nil {
 				select {
 				// write errors get sent to the receiving queue
@@ -87,14 +88,18 @@ func (c *client) readMessage(ctx context.Context) (*protocol.GameMessage, error)
 	return msg, nil
 }
 
-func (c *client) writeMessage(msg *protocol.GameMessage) {
+func (c *client) sendMessage(msg *protocol.GameMessage) {
 	select {
 	case c.sending <- msg:
 	case <-c.stop:
 	}
 }
 
-func (c *client) writeMessageReal(ctx context.Context, msg *protocol.GameMessage) error {
+func (c *client) writeMessage(ctx context.Context, msg *protocol.GameMessage) error {
+	// writes should happen quickly, unless buffers are way full, so timeout quickly
+	ctx, cancel := context.WithTimeout(ctx, time.Second*1)
+	defer cancel()
+
 	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return err
