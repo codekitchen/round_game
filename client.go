@@ -44,7 +44,7 @@ func (c *client) run() {
 			break
 		}
 		c.logger.Debug("received message", "gamemessage", msg)
-		c.game.gotClientMessage(c, msg)
+		c.game.fromClients <- clientMessage{c, msg}
 	}
 }
 

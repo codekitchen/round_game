@@ -39,6 +39,7 @@ func (gm *gameManager) findGame() *game {
 	}
 	// no games currently, start a new one
 	g := newGame()
+	go g.run()
 	gm.games[g.id] = g
 	return g
 }

@@ -12,6 +12,11 @@ import (
 
 type gameID = uuid.UUID
 
+type clientMessage struct {
+	c   *client
+	msg *protocol.GameMessage
+}
+
 type game struct {
 	id              gameID
 	seed            int32
@@ -20,6 +25,9 @@ type game struct {
 	events          []*protocol.GameMessage
 	mostRecentFrame int32
 	logger          *slog.Logger
+
+	stop        chan struct{}
+	fromClients chan clientMessage
 }
 
 func newGame() *game {
@@ -29,7 +37,23 @@ func newGame() *game {
 		seed:    rand.Int32(),
 		clients: list.New[*client](),
 		logger:  slog.Default().With("game", id),
+
+		stop:        make(chan struct{}),
+		fromClients: make(chan clientMessage),
 	}
+}
+
+func (g *game) run() error {
+loop:
+	for {
+		select {
+		case fc := <-g.fromClients:
+			g.gotClientMessage(fc.c, fc.msg)
+		case <-g.stop:
+			break loop
+		}
+	}
+	return nil
 }
 
 func (g *game) addClient(c *client) error {
