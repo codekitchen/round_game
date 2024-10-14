@@ -1,3 +1,4 @@
+# ALB and EC2 instance were manually created for now
 services:
   roundgame:
     build: .

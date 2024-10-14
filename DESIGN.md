@@ -17,6 +17,11 @@ Game state is passed between players as a series of events, mostly player
 inputs. This is much less data transfer than sending game state snapshots and
 deltas.
 
+A good overview of lockstep multiplayer games [is
+here](https://www.gamedeveloper.com/programming/minimizing-the-pain-of-lockstep-multiplayer).
+Because only one player is active at a time, we don't have to wait for inputs
+from all other clients before the player can advance the simulation.
+
 A big problem with multiplayer games is different clients getting out of sync,
 even though they're playing the same event stream. This can happen for many
 reasons, including the floating point rounding mentioned above. It can also
