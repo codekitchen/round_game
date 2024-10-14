@@ -17,7 +17,7 @@ export const SHAPES: ShapeDef[] = [
   {
     color: new Color(0, 0, 1),
     tiles: [
-      vec2(-1, -1), vec2(-1, 0), vec2(0, 0), vec2(1, 0),
+      vec2(-1, 0), vec2(0, 0), vec2(1, 0), vec2(1, -1),
     ],
   },
   // L
