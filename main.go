@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/codekitchen/roundgame/internal/server"
 )
 
 func main() {
@@ -37,7 +39,7 @@ func run() error {
 
 	handler := http.NewServeMux()
 	fs := http.FileServer(http.Dir("web/dst/"))
-	handler.Handle("/ws", newWebsocketServer())
+	handler.Handle("/ws", server.New())
 	handler.Handle("/", fs)
 
 	s := &http.Server{

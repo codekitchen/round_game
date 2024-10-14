@@ -7,7 +7,6 @@ RUN go mod download
 
 COPY *.go ./
 COPY internal ./internal
-COPY util ./util
 RUN CGO_ENABLED=0 go build -v -o /usr/local/bin/app .
 
 FROM node:22.9.0-bookworm AS webbuild

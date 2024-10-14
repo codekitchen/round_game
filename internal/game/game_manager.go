@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"log/slog"
@@ -13,9 +13,9 @@ import (
 // managing concurrently running games, etc. right now there's only ever
 // one game at a time.
 
-type gameManager struct {
+type GameManager struct {
 	sync.RWMutex
-	games map[gameID]*game
+	games map[GameID]*Game
 }
 
 // game manager events
@@ -24,20 +24,20 @@ type gameManager struct {
 // - game has ended, error or otherwise
 // - server is shutting down
 
-func newGameManager() *gameManager {
-	return &gameManager{
-		games: make(map[gameID]*game),
+func NewGameManager() *GameManager {
+	return &GameManager{
+		games: make(map[GameID]*Game),
 	}
 }
 
 // This gets called directly from the HTTP handler on multiple goroutines, so we need locking
-func (gm *gameManager) clientJoined(ws *websocket.Conn) {
+func (gm *GameManager) ClientJoined(ws *websocket.Conn) {
 	game := gm.findGame()
 	c := client.New(ws, game.fromClients, game.logger)
 	game.AddClient(c)
 }
 
-func (gm *gameManager) findGame() *game {
+func (gm *GameManager) findGame() *Game {
 	g := gm.findExistingGame()
 	if g != nil {
 		return g
@@ -48,12 +48,12 @@ func (gm *gameManager) findGame() *game {
 	defer gm.Unlock()
 
 	g = newGame()
-	gm.games[g.id] = g
+	gm.games[g.ID] = g
 	go gm.runGame(g)
 	return g
 }
 
-func (gm *gameManager) findExistingGame() *game {
+func (gm *GameManager) findExistingGame() *Game {
 	gm.RLock()
 	defer gm.RUnlock()
 
@@ -64,16 +64,16 @@ func (gm *gameManager) findExistingGame() *game {
 	return nil
 }
 
-func (gm *gameManager) runGame(g *game) {
+func (gm *GameManager) runGame(g *Game) {
 	err := g.loop()
 	if err == nil {
-		slog.Debug("game loop ended", "game", g.id)
+		slog.Debug("game loop ended", "game", g.ID)
 	} else {
-		slog.Error("game loop failed", "game", g.id, "err", err)
+		slog.Error("game loop failed", "game", g.ID, "err", err)
 	}
 
 	gm.Lock()
 	defer gm.Unlock()
 
-	delete(gm.games, g.id)
+	delete(gm.games, g.ID)
 }

@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"fmt"
@@ -9,13 +9,13 @@ import (
 
 	"github.com/codekitchen/roundgame/internal/client"
 	"github.com/codekitchen/roundgame/internal/protocol"
-	"github.com/codekitchen/roundgame/util/list"
+	"github.com/codekitchen/roundgame/internal/util/list"
 )
 
-type gameID = string
+type GameID = string
 
-type game struct {
-	id              gameID
+type Game struct {
+	ID              GameID
 	seed            int32
 	clients         *list.List[*client.Client]
 	player          *list.Node[*client.Client]
@@ -38,10 +38,10 @@ var nextGameID atomic.Uint32
 // - write message to all clients, sometimes excluding the source client
 // - Close was called, end game and notify/disconnect all clients
 
-func newGame() *game {
+func newGame() *Game {
 	id := fmt.Sprintf("%d", nextGameID.Add(1))
-	return &game{
-		id:      id,
+	return &Game{
+		ID:      id,
 		seed:    rand.Int32(),
 		clients: list.New[*client.Client](),
 		logger:  slog.Default().With("game", id),
@@ -52,7 +52,7 @@ func newGame() *game {
 	}
 }
 
-func (g *game) loop() error {
+func (g *Game) loop() error {
 	defer g.shutdown()
 	var endGame <-chan time.Time
 
@@ -84,11 +84,11 @@ loop:
 	return nil
 }
 
-func (g *game) Stop() {
+func (g *Game) Stop() {
 	close(g.stop)
 }
 
-func (g *game) shutdown() {
+func (g *Game) shutdown() {
 	g.logger.Debug("shutting down game")
 	g.player = nil
 	for n := g.clients.Front(); n != nil; n = g.clients.Front() {
@@ -97,16 +97,16 @@ func (g *game) shutdown() {
 	}
 }
 
-func (g *game) dropClient(c *client.Client) {
+func (g *Game) dropClient(c *client.Client) {
 	c.Stop()
 	g.clientDisconnected(c)
 }
 
-func (g *game) AddClient(c *client.Client) {
+func (g *Game) AddClient(c *client.Client) {
 	g.newClients <- c
 }
 
-func (g *game) addClient(c *client.Client) {
+func (g *Game) addClient(c *client.Client) {
 	g.logger.Debug("new client joined game", "client", c)
 	node := g.clients.InsertBefore(c, g.player)
 	c.SendMessage(&protocol.GameMessage{
@@ -140,7 +140,7 @@ func (g *game) addClient(c *client.Client) {
 	}
 }
 
-func (g *game) clientDisconnected(c *client.Client) {
+func (g *Game) clientDisconnected(c *client.Client) {
 	if g.player != nil && c == g.player.Value {
 		g.chooseNextPlayer(g.mostRecentFrame, false)
 	}
@@ -148,7 +148,7 @@ func (g *game) clientDisconnected(c *client.Client) {
 	g.clients.Remove(node)
 }
 
-func (g *game) chooseNextPlayer(frame int32, allowSame bool) {
+func (g *Game) chooseNextPlayer(frame int32, allowSame bool) {
 	prev := g.player
 	g.player = g.player.NextOrFront()
 	if g.player == nil || (!allowSame && g.player == prev) {
@@ -161,12 +161,12 @@ func (g *game) chooseNextPlayer(frame int32, allowSame bool) {
 	g.changeRole(g.player.Value, protocol.Role_ROLE_PLAYER, frame)
 }
 
-func (g *game) addEvent(msg *protocol.GameMessage) {
+func (g *Game) addEvent(msg *protocol.GameMessage) {
 	g.events = append(g.events, msg)
 	g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 }
 
-func (g *game) gotClientMessage(source *client.Client, msg *protocol.GameMessage) {
+func (g *Game) gotClientMessage(source *client.Client, msg *protocol.GameMessage) {
 	if msg.GetPassControl() != nil {
 		g.handlePassControlMessage(source, msg)
 		return
@@ -186,7 +186,7 @@ func (g *game) gotClientMessage(source *client.Client, msg *protocol.GameMessage
 	}
 }
 
-func (g *game) handlePassControlMessage(source *client.Client, msg *protocol.GameMessage) {
+func (g *Game) handlePassControlMessage(source *client.Client, msg *protocol.GameMessage) {
 	if source != g.player.Value {
 		g.logger.Info("ignoring pass control message from non-player", "msg", msg, "source", source)
 		return
@@ -195,7 +195,7 @@ func (g *game) handlePassControlMessage(source *client.Client, msg *protocol.Gam
 	g.chooseNextPlayer(msg.Frame+1, true)
 }
 
-func (g *game) changeRole(c *client.Client, role protocol.Role, frame int32) {
+func (g *Game) changeRole(c *client.Client, role protocol.Role, frame int32) {
 	c.SendMessage(&protocol.GameMessage{
 		Frame: frame,
 		Msg: &protocol.GameMessage_RoleChange{
