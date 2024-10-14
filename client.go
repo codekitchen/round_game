@@ -37,12 +37,14 @@ func newClient(ws *websocket.Conn, id string, logger *slog.Logger, game *game) *
 func (c *client) run() {
 	defer c.ws.CloseNow()
 	for {
-		err := c.readMessage()
+		msg, err := c.readMessage()
 		if err != nil {
 			err = fmt.Errorf("failed to read message: %w", err)
 			c.disconnect(err)
 			break
 		}
+		c.logger.Debug("received message", "gamemessage", msg)
+		c.game.gotClientMessage(c, msg)
 	}
 }
 
@@ -56,23 +58,22 @@ func (c *client) disconnect(err error) {
 	c.game.clientDisconnected(c, err)
 }
 
-func (c *client) readMessage() error {
+func (c *client) readMessage() (*protocol.GameMessage, error) {
+	// take a ctx
 	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	// defer cancel()
 	ctx := context.Background()
 
 	_, buf, err := c.ws.Read(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	msg := &protocol.GameMessage{}
 	err = proto.Unmarshal(buf, msg)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	c.logger.Debug("received message", "gamemessage", msg)
-	c.game.gotClientMessage(c, msg)
-	return nil
+	return msg, nil
 }
 
 func (c *client) writeMessage(msg *protocol.GameMessage) error {
@@ -80,10 +81,8 @@ func (c *client) writeMessage(msg *protocol.GameMessage) error {
 	if err != nil {
 		return err
 	}
-	return c.write(buf)
-}
 
-func (c *client) write(buf []byte) error {
+	// move this to caller
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
