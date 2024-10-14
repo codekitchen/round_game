@@ -49,6 +49,7 @@ export class Game {
     this.tetris.passControlCB = this.passControl;
     this.gameState = 'playing';
     this.frame = this.lastEventFrame = 0;
+    this.role = gameserver.Role.ROLE_OBSERVER;
   }
 
   render() {
