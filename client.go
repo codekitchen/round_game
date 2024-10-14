@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
@@ -12,10 +10,13 @@ import (
 )
 
 type client struct {
-	id     string
+	ID     string `json:"id"`
 	ws     *websocket.Conn
 	logger *slog.Logger
-	game   *game
+
+	received chan<- clientMessage
+	sending  chan *protocol.GameMessage
+	stop     chan struct{}
 }
 
 // client events:
@@ -25,51 +26,55 @@ type client struct {
 // - error while reading or writing (timeout or other), need to disconnect and notify owner (game)
 
 func (c *client) String() string {
-	return c.id
+	return c.ID
 }
 
-func newClient(ws *websocket.Conn, id string, logger *slog.Logger, game *game) *client {
-	c := &client{
-		id:     id,
-		ws:     ws,
-		logger: logger,
-		game:   game,
-	}
-	go c.run()
-	c.logger.Info("new client joined game", "game", game.id)
-	return c
-}
-
-func (c *client) run() {
+func (c *client) loop() {
 	defer c.ws.CloseNow()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go c.readLoop(ctx)
+	go c.writeLoop(ctx)
+
+	<-c.stop
+	c.logger.Debug("client disconnected")
+}
+
+func (c *client) readLoop(ctx context.Context) {
 	for {
-		msg, err := c.readMessage()
-		if err != nil {
-			err = fmt.Errorf("failed to read message: %w", err)
-			c.disconnect(err)
-			break
+		msg, err := c.readMessage(ctx)
+		select {
+		case c.received <- clientMessage{c, msg, err}:
+		case <-c.stop:
+			return
 		}
-		c.logger.Debug("received message", "gamemessage", msg)
-		c.game.fromClients <- clientMessage{c, msg}
+		if err != nil {
+			return
+		}
 	}
 }
 
-func (c *client) disconnect(err error) {
-	defer c.ws.CloseNow()
-	if err == nil {
-		c.logger.Debug("client disconnect")
-	} else {
-		c.logger.Error("client error, disconnecting", "err", err)
+func (c *client) writeLoop(ctx context.Context) {
+	for {
+		select {
+		case msg := <-c.sending:
+			err := c.writeMessageReal(ctx, msg)
+			if err != nil {
+				select {
+				// write errors get sent to the receiving queue
+				case c.received <- clientMessage{c, nil, err}:
+				case <-c.stop:
+					return
+				}
+			}
+		case <-c.stop:
+			return
+		}
 	}
-	c.game.clientDisconnected(c, err)
 }
 
-func (c *client) readMessage() (*protocol.GameMessage, error) {
-	// take a ctx
-	// ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	// defer cancel()
-	ctx := context.Background()
-
+func (c *client) readMessage(ctx context.Context) (*protocol.GameMessage, error) {
 	_, buf, err := c.ws.Read(ctx)
 	if err != nil {
 		return nil, err
@@ -82,15 +87,17 @@ func (c *client) readMessage() (*protocol.GameMessage, error) {
 	return msg, nil
 }
 
-func (c *client) writeMessage(msg *protocol.GameMessage) error {
+func (c *client) writeMessage(msg *protocol.GameMessage) {
+	select {
+	case c.sending <- msg:
+	case <-c.stop:
+	}
+}
+
+func (c *client) writeMessageReal(ctx context.Context, msg *protocol.GameMessage) error {
 	buf, err := proto.Marshal(msg)
 	if err != nil {
 		return err
 	}
-
-	// move this to caller
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-
 	return c.ws.Write(ctx, websocket.MessageBinary, buf)
 }

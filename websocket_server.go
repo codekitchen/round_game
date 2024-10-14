@@ -26,9 +26,5 @@ func (s websocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("accepted websocket", "conn", r.RemoteAddr)
 
-	err = s.gm.clientJoined(c, r.RemoteAddr)
-	if err != nil {
-		slog.Debug("failed to join game", "err", err)
-		c.CloseNow()
-	}
+	s.gm.clientJoined(c, r.RemoteAddr)
 }

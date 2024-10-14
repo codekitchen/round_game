@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 
+	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
 )
 
@@ -26,12 +27,19 @@ func newGameManager() *gameManager {
 	}
 }
 
-func (gm *gameManager) clientJoined(c *websocket.Conn, id string) error {
+func (gm *gameManager) clientJoined(ws *websocket.Conn, id string) {
 	game := gm.findGame()
 	logger := slog.With("client", id)
-	client := newClient(c, id, logger, game)
-	err := game.addClient(client)
-	return err
+	client := &client{
+		ID:       id,
+		ws:       ws,
+		logger:   logger,
+		received: game.fromClients,
+		sending:  make(chan *protocol.GameMessage),
+		stop:     make(chan struct{}),
+	}
+	go client.loop()
+	game.addClient(client)
 }
 
 func (gm *gameManager) findGame() *game {
@@ -45,7 +53,7 @@ func (gm *gameManager) findGame() *game {
 	}
 	// no games currently, start a new one
 	g := newGame()
-	go g.run()
+	go g.loop()
 	gm.games[g.id] = g
 	return g
 }

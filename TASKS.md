@@ -14,6 +14,7 @@
 - [x] save game recordings
 - [x] switch players
 - [x] logging
+- [ ] timeouts for client reading/writing
 - [ ] end game if no clients are connected for N seconds
 - [ ] keep retrying when electing new player fails
 - [ ] timeout player quickly (2s?) if unresponsive, to keep the game moving

@@ -15,6 +15,7 @@ type gameID = uuid.UUID
 type clientMessage struct {
 	c   *client
 	msg *protocol.GameMessage
+	err error
 }
 
 type game struct {
@@ -51,11 +52,16 @@ func newGame() *game {
 	}
 }
 
-func (g *game) run() error {
+func (g *game) loop() error {
 loop:
 	for {
 		select {
 		case fc := <-g.fromClients:
+			if fc.err != nil {
+				close(fc.c.stop)
+				g.clientDisconnected(fc.c, fc.err)
+				break
+			}
 			g.gotClientMessage(fc.c, fc.msg)
 		case <-g.stop:
 			break loop
@@ -64,10 +70,10 @@ loop:
 	return nil
 }
 
-func (g *game) addClient(c *client) error {
+func (g *game) addClient(c *client) {
 	g.logger.Debug("new client joined game", "client", c)
 	node := g.clients.InsertBefore(c, g.player)
-	err := c.writeMessage(&protocol.GameMessage{
+	c.writeMessage(&protocol.GameMessage{
 		Frame: 0,
 		Msg: &protocol.GameMessage_GameInit{
 			GameInit: &protocol.GameInit{
@@ -75,24 +81,19 @@ func (g *game) addClient(c *client) error {
 			},
 		},
 	})
-	if err != nil {
-		return err
-	}
 	// replay past events to the new client
+	// TODO: this could block for a long time here if the client is slow
+	// to read the messages.
 	// need to start as observer, replay all existing messages, and then switch to
 	// player
 	for _, msg := range g.events {
-		err = c.writeMessage(msg)
-		if err != nil {
-			slog.Error("failed to replay message", "err", err)
-			return err
-		}
+		c.writeMessage(msg)
 	}
 	if g.player == nil {
 		g.logger.Debug("promoting new client to player", "client", c)
 		g.player = node
 
-		err = c.writeMessage(&protocol.GameMessage{
+		c.writeMessage(&protocol.GameMessage{
 			Frame: g.mostRecentFrame + 1,
 			Msg: &protocol.GameMessage_RoleChange{
 				RoleChange: &protocol.RoleChange{
@@ -100,12 +101,7 @@ func (g *game) addClient(c *client) error {
 				},
 			},
 		})
-		if err != nil {
-			return err
-		}
 	}
-
-	return err
 }
 
 func (g *game) clientDisconnected(c *client, _ error) {
@@ -148,10 +144,7 @@ func (g *game) gotClientMessage(source *client, msg *protocol.GameMessage) {
 		if c == source {
 			continue
 		}
-		err := c.writeMessage(msg)
-		if err != nil {
-			slog.Error("failed to write message", "err", err)
-		}
+		c.writeMessage(msg)
 	}
 }
 
@@ -165,7 +158,7 @@ func (g *game) handlePassControlMessage(source *client, msg *protocol.GameMessag
 }
 
 func (g *game) changeRole(c *client, role protocol.Role, frame int32) {
-	err := c.writeMessage(&protocol.GameMessage{
+	c.writeMessage(&protocol.GameMessage{
 		Frame: frame,
 		Msg: &protocol.GameMessage_RoleChange{
 			RoleChange: &protocol.RoleChange{
@@ -173,7 +166,4 @@ func (g *game) changeRole(c *client, role protocol.Role, frame int32) {
 			},
 		},
 	})
-	if err != nil {
-		slog.Error("failed to change role", "err", err)
-	}
 }
