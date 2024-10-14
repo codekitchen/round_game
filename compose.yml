@@ -1,0 +1,11 @@
+services:
+  roundgame:
+    build: .
+    ports:
+      - "8080:8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: 6g
+        max-file: '24'
+    restart: unless-stopped
