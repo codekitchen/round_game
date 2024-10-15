@@ -18,6 +18,7 @@
 - [x] end game if no clients are connected for N seconds
 - [x] keep retrying when electing new player fails
 - [ ] timeout player quickly (2s?) if unresponsive, to keep the game moving
+- [ ] track some basic stats, and preserve across restarts
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around

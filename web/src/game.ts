@@ -4,7 +4,7 @@ import { ServerConnection } from "./server.js";
 import { TetrisGame } from "./tetris_game.js"
 
 const HEARTBEAT_INTERVAL = 20; // max frames between an event
-const OBSERVER_DELAY = 30; // # of frames
+const OBSERVER_DELAY = 15; // # of frames
 
 export class Game {
   tetris?: TetrisGame;
