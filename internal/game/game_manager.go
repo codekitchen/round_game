@@ -1,6 +1,7 @@
 package game
 
 import (
+	"expvar"
 	"log/slog"
 	"sync"
 
@@ -8,6 +9,14 @@ import (
 
 	"github.com/codekitchen/roundgame/internal/client"
 )
+
+var totalGames *expvar.Int
+var currentGames *expvar.Int
+
+func init() {
+	totalGames = expvar.NewInt("total_games")
+	currentGames = expvar.NewInt("current_games")
+}
 
 type GameManager struct {
 	sync.RWMutex
@@ -48,6 +57,8 @@ func (gm *GameManager) createNewGame() *Game {
 	g := newGame()
 	gm.games[g.ID] = g
 	go gm.runGame(g)
+	currentGames.Add(1)
+	totalGames.Add(1)
 	return g
 }
 
@@ -73,5 +84,6 @@ func (gm *GameManager) runGame(g *Game) {
 	gm.Lock()
 	defer gm.Unlock()
 
+	currentGames.Add(-1)
 	delete(gm.games, g.ID)
 }

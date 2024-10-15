@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"expvar"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -12,6 +13,14 @@ import (
 	"github.com/coder/websocket"
 	"google.golang.org/protobuf/proto"
 )
+
+var totalPlayers *expvar.Int
+var currentPlayers *expvar.Int
+
+func init() {
+	totalPlayers = expvar.NewInt("total_players")
+	currentPlayers = expvar.NewInt("current_players")
+}
 
 type ClientMessage struct {
 	C   *Client
@@ -45,6 +54,8 @@ func New(ws *websocket.Conn, received chan ClientMessage, logger *slog.Logger) *
 		stopped:  make(chan struct{}),
 	}
 	go c.loop()
+	totalPlayers.Add(1)
+	currentPlayers.Add(1)
 	return c
 }
 
@@ -84,6 +95,7 @@ func (c *Client) loop() {
 	cancel()
 	wg.Wait()
 	c.logger.Debug("client disconnected")
+	currentPlayers.Add(-1)
 	c.stop <- nil
 }
 

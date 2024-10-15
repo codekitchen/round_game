@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"expvar"
 	"fmt"
 	"log/slog"
 	"net"
@@ -41,6 +42,7 @@ func run() error {
 	fs := http.FileServer(http.Dir("web/dst/"))
 	handler.Handle("/ws", server.New())
 	handler.Handle("/", fs)
+	handler.Handle("/debug/vars", expvar.Handler())
 
 	s := &http.Server{
 		Handler:      handler,
