@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec expvarmon -ports="https://roundgame.codekitchen.net:443/debug/vars" -vars "mem:memstats.Alloc,mem:memstats.Sys,mem:memstats.HeapAlloc,mem:memstats.HeapInuse,duration:memstats.PauseNs,duration:memstats.PauseTotalNs,total_games,current_games,total_players,current_players"
