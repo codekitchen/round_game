@@ -19,6 +19,7 @@
 - [x] keep retrying when electing new player fails
 - [ ] timeout player quickly (2s?) if unresponsive, to keep the game moving
 - [ ] track some basic stats, and preserve across restarts
+- [x] fix replay to new clients, it's lagging
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around
@@ -38,3 +39,4 @@
 
 # Refactor
 - [x] client role handling is smelly
+- [x] client and game relationship is too intertwined, client shouldn't know about game

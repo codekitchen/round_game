@@ -104,6 +104,8 @@ func (g *Game) dropClient(c *client.Client) {
 }
 
 func (g *Game) AddClient(c *client.Client) {
+	// TODO: race condition, clients can be added to the chan and then the game
+	// shuts down before they're read off the chan
 	g.newClients <- c
 }
 
@@ -164,7 +166,10 @@ func (g *Game) chooseNextPlayer(frame int32, allowSame bool) {
 }
 
 func (g *Game) addEvent(msg *protocol.GameMessage) {
-	g.events = append(g.events, msg)
+	if msg.GetGameEvent() != nil {
+		// don't add things like heartbeats to the replay log
+		g.events = append(g.events, msg)
+	}
 	g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 }
 
@@ -174,10 +179,7 @@ func (g *Game) gotClientMessage(source *client.Client, msg *protocol.GameMessage
 		return
 	}
 
-	// don't add things like heartbeats to the replay log
-	if msg.GetGameEvent() != nil {
-		g.addEvent(msg)
-	}
+	g.addEvent(msg)
 
 	for c := range g.clients.All() {
 		if c == source {
