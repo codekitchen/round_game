@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -25,7 +26,8 @@ type Client struct {
 
 	received chan<- ClientMessage
 	sending  chan *protocol.GameMessage
-	stop     chan struct{}
+	stop     chan error
+	stopped  chan struct{}
 }
 
 var nextClientID atomic.Uint32
@@ -39,7 +41,8 @@ func New(ws *websocket.Conn, received chan ClientMessage, logger *slog.Logger) *
 
 		received: received,
 		sending:  make(chan *protocol.GameMessage),
-		stop:     make(chan struct{}),
+		stop:     make(chan error),
+		stopped:  make(chan struct{}),
 	}
 	go c.loop()
 	return c
@@ -55,8 +58,9 @@ func (c *Client) String() string {
 	return c.ID
 }
 
-func (c *Client) Stop() {
-	close(c.stop)
+func (c *Client) Stop() error {
+	c.stop <- nil
+	return <-c.stop
 }
 
 func (c *Client) loop() {
@@ -64,11 +68,23 @@ func (c *Client) loop() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go c.readLoop(ctx)
-	go c.writeLoop(ctx)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		c.readLoop(ctx)
+	}()
+	go func() {
+		defer wg.Done()
+		c.writeLoop(ctx)
+	}()
 
 	<-c.stop
+	close(c.stopped)
+	cancel()
+	wg.Wait()
 	c.logger.Debug("client disconnected")
+	c.stop <- nil
 }
 
 func (c *Client) readLoop(ctx context.Context) {
@@ -76,7 +92,7 @@ func (c *Client) readLoop(ctx context.Context) {
 		msg, err := c.readMessage(ctx)
 		select {
 		case c.received <- ClientMessage{c, msg, err}:
-		case <-c.stop:
+		case <-c.stopped:
 			return
 		}
 		if err != nil {
@@ -94,11 +110,11 @@ func (c *Client) writeLoop(ctx context.Context) {
 				select {
 				// write errors get sent to the receiving queue
 				case c.received <- ClientMessage{c, nil, err}:
-				case <-c.stop:
+				case <-c.stopped:
 					return
 				}
 			}
-		case <-c.stop:
+		case <-c.stopped:
 			return
 		}
 	}
@@ -118,10 +134,7 @@ func (c *Client) readMessage(ctx context.Context) (*protocol.GameMessage, error)
 }
 
 func (c *Client) SendMessage(msg *protocol.GameMessage) {
-	select {
-	case c.sending <- msg:
-	case <-c.stop:
-	}
+	c.sending <- msg
 }
 
 func (c *Client) writeMessage(ctx context.Context, msg *protocol.GameMessage) error {

@@ -9,10 +9,6 @@ import (
 	"github.com/codekitchen/roundgame/internal/client"
 )
 
-// eventually this will have more logic around capping # of clients in a game,
-// managing concurrently running games, etc. right now there's only ever
-// one game at a time.
-
 type GameManager struct {
 	sync.RWMutex
 	games map[GameID]*Game
@@ -42,12 +38,14 @@ func (gm *GameManager) findGame() *Game {
 	if g != nil {
 		return g
 	}
+	return gm.createNewGame()
+}
 
-	// no games currently, start a new one
+func (gm *GameManager) createNewGame() *Game {
 	gm.Lock()
 	defer gm.Unlock()
 
-	g = newGame()
+	g := newGame()
 	gm.games[g.ID] = g
 	go gm.runGame(g)
 	return g

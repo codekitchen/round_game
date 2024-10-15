@@ -53,6 +53,7 @@ func newGame() *Game {
 }
 
 func (g *Game) loop() error {
+	g.logger.Debug("starting new game")
 	defer g.shutdown()
 	var endGame <-chan time.Time
 
@@ -118,13 +119,14 @@ func (g *Game) addClient(c *client.Client) {
 		},
 	})
 	// replay past events to the new client
-	// TODO: this could block for a long time here if the client is slow
-	// to read the messages.
-	// need to start as observer, replay all existing messages, and then switch to
-	// player
+	// TODO: this is happening on the main game thread, which could block
+	// for too long if send buffers fill up. we do have a tight write timeout, though.
 	for _, msg := range g.events {
 		c.SendMessage(msg)
 	}
+
+	// need to start as observer, replay all existing messages, and then switch to
+	// player
 	if g.player == nil {
 		g.logger.Debug("promoting new client to player", "client", c)
 		g.player = node
@@ -177,7 +179,6 @@ func (g *Game) gotClientMessage(source *client.Client, msg *protocol.GameMessage
 		g.addEvent(msg)
 	}
 
-	// TODO: separate threads for writes to each client to avoid blocking
 	for c := range g.clients.All() {
 		if c == source {
 			continue
