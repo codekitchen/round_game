@@ -1,4 +1,4 @@
-package util
+package container
 
 type Set[T comparable] map[T]struct{}
 

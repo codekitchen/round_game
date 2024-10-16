@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/codekitchen/roundgame/internal/client"
+	"github.com/codekitchen/roundgame/internal/container/list"
 	"github.com/codekitchen/roundgame/internal/protocol"
-	"github.com/codekitchen/roundgame/internal/util/list"
 )
 
 type GameID = string
