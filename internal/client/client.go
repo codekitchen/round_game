@@ -41,22 +41,25 @@ type Client struct {
 
 var nextClientID atomic.Uint32
 
-func New(ws *websocket.Conn, received chan ClientMessage, logger *slog.Logger) *Client {
+func New(ws *websocket.Conn, logger *slog.Logger) *Client {
 	id := fmt.Sprintf("%d", nextClientID.Add(1))
 	c := &Client{
 		ID:     id,
 		ws:     ws,
 		logger: logger.With("client", id),
 
-		received: received,
-		sending:  make(chan *protocol.GameMessage),
-		stop:     make(chan error),
-		stopped:  make(chan struct{}),
+		sending: make(chan *protocol.GameMessage),
+		stop:    make(chan error),
+		stopped: make(chan struct{}),
 	}
-	go c.loop()
 	totalPlayers.Add(1)
 	currentPlayers.Add(1)
 	return c
+}
+
+func (c *Client) Start(received chan<- ClientMessage) {
+	c.received = received
+	go c.loop()
 }
 
 // client events:

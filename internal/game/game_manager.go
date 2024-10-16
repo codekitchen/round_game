@@ -37,9 +37,16 @@ func NewGameManager() *GameManager {
 
 // This gets called directly from the HTTP handler on multiple goroutines, so we need locking
 func (gm *GameManager) ClientJoined(ws *websocket.Conn) {
-	game := gm.findGame()
-	c := client.New(ws, game.fromClients, game.logger)
-	game.AddClient(c)
+	// keep trying games until we successfully add the client to one
+	for {
+		game := gm.findGame()
+		c := client.New(ws, game.logger)
+		err := game.AddClient(c)
+		if err == nil {
+			c.Start(game.fromClients)
+			break
+		}
+	}
 }
 
 func (gm *GameManager) findGame() *Game {

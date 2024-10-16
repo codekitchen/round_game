@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
@@ -10,6 +11,10 @@ import (
 	"github.com/codekitchen/roundgame/internal/client"
 	"github.com/codekitchen/roundgame/internal/container/list"
 	"github.com/codekitchen/roundgame/internal/protocol"
+)
+
+var (
+	ErrGameStopped = errors.New("game stopped")
 )
 
 type GameID = string
@@ -103,10 +108,13 @@ func (g *Game) dropClient(c *client.Client) {
 	g.clientDisconnected(c)
 }
 
-func (g *Game) AddClient(c *client.Client) {
-	// TODO: race condition, clients can be added to the chan and then the game
-	// shuts down before they're read off the chan
-	g.newClients <- c
+func (g *Game) AddClient(c *client.Client) error {
+	select {
+	case g.newClients <- c:
+		return nil
+	case <-g.stop:
+		return ErrGameStopped
+	}
 }
 
 func (g *Game) addClient(c *client.Client) {
