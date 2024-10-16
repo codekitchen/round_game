@@ -155,6 +155,11 @@ export class Game {
         this.handleEvent(event);
       }
 
+      while (this.frame < fastTargetFrame) {
+        // no more events in the horizon, but we're still behind
+        this.stepSimulation();
+      }
+
       // now we are caught up, replay in real time
       while (events.length > 0 && events[0].frame <= this.frame) {
         let event = events.shift()!;
