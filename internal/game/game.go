@@ -94,6 +94,10 @@ func (g *Game) Stop() {
 	close(g.stop)
 }
 
+func (g *Game) NumPlayers() int {
+	return g.clients.Len()
+}
+
 func (g *Game) shutdown() {
 	g.logger.Debug("shutting down game")
 	g.player = nil

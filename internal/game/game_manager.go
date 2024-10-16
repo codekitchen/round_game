@@ -13,6 +13,8 @@ import (
 var totalGames *expvar.Int
 var currentGames *expvar.Int
 
+const MAX_PLAYERS = 3
+
 func init() {
 	totalGames = expvar.NewInt("total_games")
 	currentGames = expvar.NewInt("current_games")
@@ -74,8 +76,9 @@ func (gm *GameManager) findExistingGame() *Game {
 	defer gm.RUnlock()
 
 	for _, g := range gm.games {
-		// just pick the first game returned for now
-		return g
+		if g.NumPlayers() < MAX_PLAYERS {
+			return g
+		}
 	}
 	return nil
 }
