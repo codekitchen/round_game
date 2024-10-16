@@ -2,6 +2,9 @@ FROM golang:1.23.2-bookworm AS gobuild
 
 WORKDIR /usr/src/app
 
+# prebuild for faster subsequent builds
+RUN CGO_ENABLED=0 go install -v std
+
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -17,7 +20,7 @@ COPY web .
 RUN npm install -y
 RUN npm run build
 
-FROM gcr.io/distroless/static-debian12
+FROM gcr.io/distroless/static-debian12 AS final
 
 EXPOSE 8080
 

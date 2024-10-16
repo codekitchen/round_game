@@ -2,7 +2,6 @@
 - [x] basic tetris imlementation
 - [x] record and replay an entire game
 - [x] game over condition
-- [ ] mobile support? would need virtual keyboard etc
 
 # Server
 - [x] serve static assets
@@ -32,6 +31,7 @@
 - [ ] Show some basic stats
 - [ ] Better graphics!
 - [ ] More juice!
+- [ ] mobile support? would need virtual keyboard etc
 
 # Deploy
 - [x] Deploy to an instance, probably Fargate. Use aws copilot?
