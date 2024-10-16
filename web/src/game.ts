@@ -64,7 +64,9 @@ export class Game {
     drawTextScreen(connState, vec2(200, 65), 20, new Color(1, 1, 1));
     if (this.gameState === 'gameover') {
       drawTextScreen('Game Over!', vec2(200, 85), 20, new Color(1, 0.5, 0.5));
-    } else {
+    }
+
+    if (this.gameState === 'playing') {
       if (this.role === gameserver.Role.ROLE_PLAYER) {
         drawTextScreen(`YOUR TURN!`, vec2(240, 145), 60, new Color(254 / 255, 209 / 255, 189 / 255));
       } else {
