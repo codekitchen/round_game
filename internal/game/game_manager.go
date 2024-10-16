@@ -13,7 +13,7 @@ import (
 var totalGames *expvar.Int
 var currentGames *expvar.Int
 
-const MAX_PLAYERS = 3
+const MAX_PLAYERS = 10
 
 func init() {
 	totalGames = expvar.NewInt("total_games")

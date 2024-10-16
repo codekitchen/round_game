@@ -137,14 +137,14 @@ func (g *Game) addClient(c *client.Client) {
 		},
 	})
 
-	g.sendPlayerList()
-
 	// replay past events to the new client
 	// TODO: this is happening on the main game thread, which could block
 	// for too long if send buffers fill up. we do have a tight write timeout, though.
 	for _, msg := range g.events {
 		c.SendMessage(msg)
 	}
+
+	g.sendPlayerList()
 
 	// need to start as observer, replay all existing messages, and then switch to
 	// player
@@ -161,6 +161,7 @@ func (g *Game) clientDisconnected(c *client.Client) {
 	}
 	node := g.clients.Find(func(v *client.Client) bool { return c == v })
 	g.clients.Remove(node)
+	g.sendPlayerList()
 }
 
 func (g *Game) chooseNextPlayer(frame int32, allowSame bool) {

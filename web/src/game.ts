@@ -1,4 +1,5 @@
-import { Color, drawTextScreen, engineObjectsUpdate, frame, setFontDefault, vec2, Vector2 } from "./littlejs.esm.js";
+import { Color, drawTextScreen, EngineObject, engineObjectsUpdate, frame, setFontDefault, vec2, Vector2 } from "./littlejs.esm.js";
+import { PlayerList } from "./player_list.js";
 import { gameserver } from "./protocol/gameserver.js";
 import { ServerConnection } from "./server.js";
 import { TetrisGame } from "./tetris_game.js"
@@ -8,6 +9,8 @@ const OBSERVER_DELAY = 15; // # of frames
 
 export class Game {
   tetris?: TetrisGame;
+  ui: EngineObject;
+  playerList: PlayerList;
   // recording infra
   frame = 0;
   lastEventFrame = 0;
@@ -20,6 +23,8 @@ export class Game {
   constructor() {
     this.server.onmessage = this.onmessage
     this.server.ondisconnect = this.ondisconnect
+    this.ui = new EngineObject()
+    this.ui.addChild(this.playerList = new PlayerList(), vec2(-8, 10))
   }
 
   onmessage = (data: gameserver.GameMessage) => {
@@ -28,6 +33,7 @@ export class Game {
     if (data.gameInit) {
       this.reset(data.gameInit.seed!)
       this.player = data.gameInit.yourPlayer as gameserver.Player
+      this.playerList.you = this.player
       return
     }
     this.recording.push(data)
@@ -55,6 +61,7 @@ export class Game {
     setFontDefault('Pixels')
     drawTextScreen(`frame: ${this.frame}`, vec2(200, 25), 20, new Color(1, 1, 1));
     drawTextScreen(`state: ${this.gameState}`, vec2(200, 45), 20, new Color(1, 1, 1));
+    // drawTextScreen(`role: ${this.role}`, vec2(200, 105), 20, new Color(1, 1, 1));
     let connState = '';
     if (this.server.state === 'connecting') {
       connState = 'Connecting...'
@@ -75,7 +82,6 @@ export class Game {
         drawTextScreen(`Waiting for your turn...`, vec2(240, 145), 20, new Color(1, 1, 1));
       }
     }
-    drawTextScreen(`Player ID ${this.player.id} (${this.player.name})`, vec2(200, 400), 20, new Color(1, 1, 1));
   }
 
   // the game state is never updated directly, we always
@@ -177,6 +183,8 @@ export class Game {
     console.log('handling event', { event, frame: this.frame })
     if (event.playerChange) {
       this.role = event.playerChange.player === this.player.id ? gameserver.Role.ROLE_PLAYER : gameserver.Role.ROLE_OBSERVER;
+    } else if (event.playerList) {
+      this.playerList.list = event.playerList.players as gameserver.Player[]
     } else if (event.gameEvent) {
       this.tetris!.processEvent(event.gameEvent as gameserver.GameEvent);
     }
