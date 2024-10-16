@@ -27,7 +27,7 @@
 - [ ] hold down left/right to move, not just tap
 - [ ] Player username and emoji avatar
 - [ ] Show position in the queue and notify when they're next
-- [ ] Handle too many players joining (100 max?)
+- [x] Handle too many players joining (100 max?)
 - [ ] Show some basic stats
 - [ ] Better graphics!
 - [ ] More juice!

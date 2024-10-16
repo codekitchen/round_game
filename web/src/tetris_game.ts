@@ -10,6 +10,11 @@ class Mino extends EngineObject {
     super();
     this.color = SHAPES[type].color;
   }
+
+  render(): void {
+    drawRect(this.pos, vec2(1), new Color(0, 0, 0));
+    drawRect(this.pos, vec2(0.85), this.color);
+  }
 }
 
 // Tetromino piece

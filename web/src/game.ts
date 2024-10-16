@@ -1,4 +1,4 @@
-import { Color, drawTextScreen, engineObjectsUpdate, frame, vec2, Vector2 } from "./littlejs.esm.js";
+import { Color, drawTextScreen, engineObjectsUpdate, frame, setFontDefault, vec2, Vector2 } from "./littlejs.esm.js";
 import { gameserver } from "./protocol/gameserver.js";
 import { ServerConnection } from "./server.js";
 import { TetrisGame } from "./tetris_game.js"
@@ -50,6 +50,7 @@ export class Game {
   }
 
   renderPost() {
+    setFontDefault('Pixels')
     drawTextScreen(`frame: ${this.frame}`, vec2(200, 25), 20, new Color(1, 1, 1));
     drawTextScreen(`state: ${this.gameState}`, vec2(200, 45), 20, new Color(1, 1, 1));
     let connState = '';
@@ -57,14 +58,18 @@ export class Game {
       connState = 'Connecting...'
     }  else if (this.server.state === 'disconnected') {
       connState = 'Disconnected'
-    } else if (this.role === gameserver.Role.ROLE_PLAYER) {
-      connState = `YOUR TURN!`
     } else {
-      connState = `Waiting for your turn...`
+      connState = 'Connected'
     }
     drawTextScreen(connState, vec2(200, 65), 20, new Color(1, 1, 1));
     if (this.gameState === 'gameover') {
       drawTextScreen('Game Over!', vec2(200, 85), 20, new Color(1, 0.5, 0.5));
+    } else {
+      if (this.role === gameserver.Role.ROLE_PLAYER) {
+        drawTextScreen(`YOUR TURN!`, vec2(240, 145), 60, new Color(254 / 255, 209 / 255, 189 / 255));
+      } else {
+        drawTextScreen(`Waiting for your turn...`, vec2(240, 145), 20, new Color(1, 1, 1));
+      }
     }
   }
 
