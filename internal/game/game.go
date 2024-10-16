@@ -131,13 +131,13 @@ func (g *Game) addClient(c *client.Client) {
 				Seed: g.seed,
 				YourPlayer: &protocol.Player{
 					Id:   c.ID,
-					Name: "brian",
+					Name: c.Name,
 				},
 			},
 		},
 	})
 
-	// TODO: send updated player list to all players
+	g.sendPlayerList()
 
 	// replay past events to the new client
 	// TODO: this is happening on the main game thread, which could block
@@ -220,4 +220,22 @@ func (g *Game) changePlayer(c *client.Client, frame int32) {
 			},
 		},
 	})
+}
+
+func (g *Game) sendPlayerList() {
+	list := &protocol.PlayerList{}
+	for c := range g.clients.All() {
+		list.Players = append(list.Players, &protocol.Player{
+			Id:   c.ID,
+			Name: c.Name,
+		})
+	}
+	for c := range g.clients.All() {
+		c.SendMessage(&protocol.GameMessage{
+			Frame: g.mostRecentFrame + 1,
+			Msg: &protocol.GameMessage_PlayerList{
+				PlayerList: list,
+			},
+		})
+	}
 }

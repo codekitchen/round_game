@@ -21,6 +21,7 @@ message GameMessage {
     PlayerChange playerChange = 3;
     Heartbeat heartbeat = 4;
     PassControl passControl = 5;
+    PlayerList playerList = 6;
 
     // game-specific events that the server doesn't parse
     GameEvent gameEvent = 100;

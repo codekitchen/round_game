@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"math/rand/v2"
+
 	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
 	"google.golang.org/protobuf/proto"
@@ -30,6 +32,7 @@ type ClientMessage struct {
 
 type Client struct {
 	ID     string
+	Name   string
 	ws     *websocket.Conn
 	logger *slog.Logger
 
@@ -39,12 +42,15 @@ type Client struct {
 	stopped  chan struct{}
 }
 
+var playerNames = []string{"🤩", "🐟", "🐙"}
+
 var nextClientID atomic.Uint32
 
 func New(ws *websocket.Conn, logger *slog.Logger) *Client {
 	id := fmt.Sprintf("%d", nextClientID.Add(1))
 	c := &Client{
 		ID:     id,
+		Name:   playerNames[rand.IntN(len(playerNames))],
 		ws:     ws,
 		logger: logger.With("client", id),
 

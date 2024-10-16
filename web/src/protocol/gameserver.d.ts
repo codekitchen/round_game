@@ -130,6 +130,9 @@ export namespace gameserver {
         /** GameMessage passControl */
         passControl?: (gameserver.IPassControl|null);
 
+        /** GameMessage playerList */
+        playerList?: (gameserver.IPlayerList|null);
+
         /** GameMessage gameEvent */
         gameEvent?: (gameserver.IGameEvent|null);
     }
@@ -158,11 +161,14 @@ export namespace gameserver {
         /** GameMessage passControl. */
         public passControl?: (gameserver.IPassControl|null);
 
+        /** GameMessage playerList. */
+        public playerList?: (gameserver.IPlayerList|null);
+
         /** GameMessage gameEvent. */
         public gameEvent?: (gameserver.IGameEvent|null);
 
         /** GameMessage msg. */
-        public msg?: ("gameInit"|"playerChange"|"heartbeat"|"passControl"|"gameEvent");
+        public msg?: ("gameInit"|"playerChange"|"heartbeat"|"passControl"|"playerList"|"gameEvent");
 
         /**
          * Creates a new GameMessage instance using the specified properties.

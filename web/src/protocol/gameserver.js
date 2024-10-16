@@ -268,6 +268,7 @@ export const gameserver = $root.gameserver = (() => {
          * @property {gameserver.IPlayerChange|null} [playerChange] GameMessage playerChange
          * @property {gameserver.IHeartbeat|null} [heartbeat] GameMessage heartbeat
          * @property {gameserver.IPassControl|null} [passControl] GameMessage passControl
+         * @property {gameserver.IPlayerList|null} [playerList] GameMessage playerList
          * @property {gameserver.IGameEvent|null} [gameEvent] GameMessage gameEvent
          */
 
@@ -327,6 +328,14 @@ export const gameserver = $root.gameserver = (() => {
         GameMessage.prototype.passControl = null;
 
         /**
+         * GameMessage playerList.
+         * @member {gameserver.IPlayerList|null|undefined} playerList
+         * @memberof gameserver.GameMessage
+         * @instance
+         */
+        GameMessage.prototype.playerList = null;
+
+        /**
          * GameMessage gameEvent.
          * @member {gameserver.IGameEvent|null|undefined} gameEvent
          * @memberof gameserver.GameMessage
@@ -339,12 +348,12 @@ export const gameserver = $root.gameserver = (() => {
 
         /**
          * GameMessage msg.
-         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"gameEvent"|undefined} msg
+         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"playerList"|"gameEvent"|undefined} msg
          * @memberof gameserver.GameMessage
          * @instance
          */
         Object.defineProperty(GameMessage.prototype, "msg", {
-            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "gameEvent"]),
+            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "playerList", "gameEvent"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -382,6 +391,8 @@ export const gameserver = $root.gameserver = (() => {
                 $root.gameserver.Heartbeat.encode(message.heartbeat, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
             if (message.passControl != null && Object.hasOwnProperty.call(message, "passControl"))
                 $root.gameserver.PassControl.encode(message.passControl, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+            if (message.playerList != null && Object.hasOwnProperty.call(message, "playerList"))
+                $root.gameserver.PlayerList.encode(message.playerList, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
             if (message.gameEvent != null && Object.hasOwnProperty.call(message, "gameEvent"))
                 $root.gameserver.GameEvent.encode(message.gameEvent, writer.uint32(/* id 100, wireType 2 =*/802).fork()).ldelim();
             return writer;
@@ -436,6 +447,10 @@ export const gameserver = $root.gameserver = (() => {
                     }
                 case 5: {
                         message.passControl = $root.gameserver.PassControl.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 6: {
+                        message.playerList = $root.gameserver.PlayerList.decode(reader, reader.uint32());
                         break;
                     }
                 case 100: {
@@ -519,6 +534,16 @@ export const gameserver = $root.gameserver = (() => {
                         return "passControl." + error;
                 }
             }
+            if (message.playerList != null && message.hasOwnProperty("playerList")) {
+                if (properties.msg === 1)
+                    return "msg: multiple values";
+                properties.msg = 1;
+                {
+                    let error = $root.gameserver.PlayerList.verify(message.playerList);
+                    if (error)
+                        return "playerList." + error;
+                }
+            }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
                 if (properties.msg === 1)
                     return "msg: multiple values";
@@ -566,6 +591,11 @@ export const gameserver = $root.gameserver = (() => {
                     throw TypeError(".gameserver.GameMessage.passControl: object expected");
                 message.passControl = $root.gameserver.PassControl.fromObject(object.passControl);
             }
+            if (object.playerList != null) {
+                if (typeof object.playerList !== "object")
+                    throw TypeError(".gameserver.GameMessage.playerList: object expected");
+                message.playerList = $root.gameserver.PlayerList.fromObject(object.playerList);
+            }
             if (object.gameEvent != null) {
                 if (typeof object.gameEvent !== "object")
                     throw TypeError(".gameserver.GameMessage.gameEvent: object expected");
@@ -610,6 +640,11 @@ export const gameserver = $root.gameserver = (() => {
                 object.passControl = $root.gameserver.PassControl.toObject(message.passControl, options);
                 if (options.oneofs)
                     object.msg = "passControl";
+            }
+            if (message.playerList != null && message.hasOwnProperty("playerList")) {
+                object.playerList = $root.gameserver.PlayerList.toObject(message.playerList, options);
+                if (options.oneofs)
+                    object.msg = "playerList";
             }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
                 object.gameEvent = $root.gameserver.GameEvent.toObject(message.gameEvent, options);
