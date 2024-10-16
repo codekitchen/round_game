@@ -20,7 +20,7 @@ class Mino extends EngineObject {
 // Tetromino piece
 class Piece extends EngineObject {
   static FAST_DROP_DELAY = 3;
-  dropDelay = 12;
+  dropDelay = 14;
   dropCounter = 0;
   constructor(type: number) {
     super(vec2(0), vec2(0));
