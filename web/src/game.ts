@@ -12,7 +12,7 @@ export class Game {
   frame = 0;
   lastEventFrame = 0;
   recording: gameserver.GameMessage[] = [];
-  gameState: 'waiting' | 'playing' = 'waiting';
+  gameState: 'waiting' | 'playing' | 'gameover' = 'waiting';
   role = gameserver.Role.ROLE_OBSERVER;
   server = new ServerConnection
 
@@ -35,23 +35,15 @@ export class Game {
     this.recording = []
   }
 
-  passControl = () => {
-    if (this.role != gameserver.Role.ROLE_PLAYER) {
-      return
-    }
-    this.server.send(gameserver.GameMessage.create({
-      frame: this.frame,
-      passControl: gameserver.PassControl.create(),
-    }))
-    // need to immediately switch roles, so that we don't keep
-    // advancing the simulation as if we were still the player
-    this.role = gameserver.Role.ROLE_OBSERVER
+  gameOver = () => {
+    this.gameState = 'gameover';
+    this.server.disconnect();
   }
 
   reset(seed: number) {
     this.tetris?.destroy();
     this.tetris = new TetrisGame(seed);
-    this.tetris.passControlCB = this.passControl;
+    this.tetris.gameOverCB = this.gameOver;
     this.gameState = 'playing';
     this.frame = this.lastEventFrame = 0;
     this.role = gameserver.Role.ROLE_OBSERVER;
@@ -71,6 +63,9 @@ export class Game {
       connState = `Waiting for your turn...`
     }
     drawTextScreen(connState, vec2(200, 65), 20, new Color(1, 1, 1));
+    if (this.gameState === 'gameover') {
+      drawTextScreen('Game Over!', vec2(200, 85), 20, new Color(1, 0.5, 0.5));
+    }
   }
 
   // the game state is never updated directly, we always
@@ -87,8 +82,10 @@ export class Game {
       return
     }
 
-    const gameEvents = this.tetris!.currentEvents();
-    const events = gameEvents.map(ev => gameserver.GameMessage.create({ frame: this.frame, gameEvent: ev }));
+    const events = this.tetris!.currentEvents();
+    for (let ev of events) {
+      ev.frame = this.frame;
+    }
 
     if (events.length > 0)
       this.lastEventFrame = this.frame;
@@ -101,10 +98,24 @@ export class Game {
     }
 
     for (let ev of events) {
-      this.server.send(ev);
+      this.sendEvent(ev);
     }
     this.replayLocally(events);
     this.stepSimulation();
+  }
+
+  sendEvent(ev: gameserver.GameMessage) {
+    if (ev.passControl) {
+      if (this.role === gameserver.Role.ROLE_PLAYER) {
+        // need to immediately switch roles, so that we don't keep
+        // advancing the simulation as if we were still the player
+        this.role = gameserver.Role.ROLE_OBSERVER
+      } else {
+        // don't send pass control messages to the server if we're not the player
+        return
+      }
+    }
+    this.server.send(ev);
   }
 
   replayLocally(events: gameserver.GameMessage[]) {

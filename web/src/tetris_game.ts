@@ -1,7 +1,6 @@
 import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown, cameraPos, drawRect, Color } from "./littlejs.esm.js";
 import { gameserver } from "./protocol/gameserver.js";
 import { SHAPES, NUM_SHAPES } from "./shapes.js";
-type GameEvent = gameserver.GameEvent;
 
 var tetrisGame: TetrisGame;
 
@@ -79,7 +78,8 @@ export class TetrisGame extends EngineObject {
   piece!: Piece;
   rand!: RandomGenerator;
   dropFast = false;
-  passControlCB?: () => void
+  passControl = false;
+  gameOverCB?: () => void
 
   static GameSize = vec2(TetrisGame.WIDTH, TetrisGame.HEIGHT);
 
@@ -89,6 +89,9 @@ export class TetrisGame extends EngineObject {
     this.dropFast = false;
     this.newPiece();
     tetrisGame = this; // implicit singleton
+  }
+  update(): void {
+    this.passControl = false;
   }
   newPiece() {
     const type = this.rand.int(NUM_SHAPES);
@@ -119,14 +122,18 @@ export class TetrisGame extends EngineObject {
       !this.isOccupied(pos);
   }
   placePiece(piece: Piece) {
+    if (!this.validPieceLocation(piece, piece.localPos)) {
+      // can't place, game over
+      this.gameOverCB?.();
+      return;
+    }
     for (let c of [...piece.children]) {
       piece.removeChild(c);
       this.addMino(c, piece.localPos.add(c.localPos));
     }
     this.checkForScoring();
     this.newPiece();
-    if (this.passControlCB)
-      this.passControlCB();
+    this.passControl = true;
   }
   checkForScoring() {
     for (let y = 0; y < TetrisGame.HEIGHT; y++) {
@@ -180,25 +187,32 @@ export class TetrisGame extends EngineObject {
       this.dropFast = false;
     }
   }
-  newEvent(type: string) {
-      return gameserver.GameEvent.create({ type })
+  gameEvent(type: string) {
+    return gameserver.GameMessage.create({
+      gameEvent: gameserver.GameEvent.create({ type })
+    })
   }
   currentEvents() {
-    let events: GameEvent[] = [];
+    let events: gameserver.GameMessage[] = [];
     if (keyWasReleased('ArrowLeft')) {
-      events.push(this.newEvent('left'));
+      events.push(this.gameEvent('left'));
     }
     if (keyWasReleased('ArrowRight')) {
-      events.push(this.newEvent('right'));
+      events.push(this.gameEvent('right'));
     }
     if (keyWasReleased('ArrowUp')) {
-      events.push(this.newEvent('rotate'));
+      events.push(this.gameEvent('rotate'));
     }
     if (keyWasPressed('ArrowDown')) {
-      events.push(this.newEvent('dropstart'));
+      events.push(this.gameEvent('dropstart'));
     }
     if (this.dropFast && !keyIsDown('ArrowDown')) {
-      events.push(this.newEvent('dropstop'));
+      events.push(this.gameEvent('dropstop'));
+    }
+    if (this.passControl) {
+      events.push(gameserver.GameMessage.create({
+        passControl: gameserver.PassControl.create()
+      }));
     }
     return events;
   }

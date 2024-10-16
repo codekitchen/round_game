@@ -1,7 +1,7 @@
 # Client
 - [x] basic tetris imlementation
 - [x] record and replay an entire game
-- [ ] game over condition
+- [x] game over condition
 - [ ] mobile support? would need virtual keyboard etc
 
 # Server

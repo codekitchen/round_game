@@ -154,7 +154,7 @@ func (g *Game) addClient(c *client.Client) {
 
 func (g *Game) clientDisconnected(c *client.Client) {
 	if g.player != nil && c == g.player.Value {
-		g.chooseNextPlayer(g.mostRecentFrame, false)
+		g.chooseNextPlayer(g.mostRecentFrame+1, false)
 	}
 	node := g.clients.Find(func(v *client.Client) bool { return c == v })
 	g.clients.Remove(node)
@@ -178,10 +178,12 @@ func (g *Game) addEvent(msg *protocol.GameMessage) {
 		// don't add things like heartbeats to the replay log
 		g.events = append(g.events, msg)
 	}
-	g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 }
 
 func (g *Game) gotClientMessage(source *client.Client, msg *protocol.GameMessage) {
+	if g.player != nil && source == g.player.Value {
+		g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
+	}
 	if msg.GetPassControl() != nil {
 		g.handlePassControlMessage(source, msg)
 		return

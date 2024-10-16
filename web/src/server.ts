@@ -17,6 +17,9 @@ export class ServerConnection {
     this.ws.onclose = this.onclose
     this.ws.onmessage = this.gotmessage
   }
+  disconnect() {
+    this.ws.close()
+  }
   gotmessage = (ev: MessageEvent) => {
     const rawdata = new Uint8Array(ev.data)
     let data = gameserver.GameMessage.decode(rawdata)
