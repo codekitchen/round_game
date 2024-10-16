@@ -129,9 +129,16 @@ func (g *Game) addClient(c *client.Client) {
 		Msg: &protocol.GameMessage_GameInit{
 			GameInit: &protocol.GameInit{
 				Seed: g.seed,
+				YourPlayer: &protocol.Player{
+					Id:   c.ID,
+					Name: "brian",
+				},
 			},
 		},
 	})
+
+	// TODO: send updated player list to all players
+
 	// replay past events to the new client
 	// TODO: this is happening on the main game thread, which could block
 	// for too long if send buffers fill up. we do have a tight write timeout, though.
@@ -144,15 +151,7 @@ func (g *Game) addClient(c *client.Client) {
 	if g.player == nil {
 		g.logger.Debug("promoting new client to player", "client", c)
 		g.player = node
-
-		c.SendMessage(&protocol.GameMessage{
-			Frame: g.mostRecentFrame + 1,
-			Msg: &protocol.GameMessage_RoleChange{
-				RoleChange: &protocol.RoleChange{
-					Role: protocol.Role_ROLE_PLAYER,
-				},
-			},
-		})
+		g.changePlayer(g.player.Value, g.mostRecentFrame+1)
 	}
 }
 
@@ -174,7 +173,7 @@ func (g *Game) chooseNextPlayer(frame int32, allowSame bool) {
 		return
 	}
 	g.logger.Debug("new player selected", "player", g.player.Value)
-	g.changeRole(g.player.Value, protocol.Role_ROLE_PLAYER, frame)
+	g.changePlayer(g.player.Value, frame)
 }
 
 func (g *Game) addEvent(msg *protocol.GameMessage) {
@@ -212,12 +211,12 @@ func (g *Game) handlePassControlMessage(source *client.Client, msg *protocol.Gam
 	g.chooseNextPlayer(msg.Frame+1, true)
 }
 
-func (g *Game) changeRole(c *client.Client, role protocol.Role, frame int32) {
+func (g *Game) changePlayer(c *client.Client, frame int32) {
 	c.SendMessage(&protocol.GameMessage{
 		Frame: frame,
-		Msg: &protocol.GameMessage_RoleChange{
-			RoleChange: &protocol.RoleChange{
-				Role: role,
+		Msg: &protocol.GameMessage_PlayerChange{
+			PlayerChange: &protocol.PlayerChange{
+				Player: g.player.Value.ID,
 			},
 		},
 	})

@@ -13,6 +13,7 @@ export class Game {
   lastEventFrame = 0;
   recording: gameserver.GameMessage[] = [];
   gameState: 'waiting' | 'playing' | 'gameover' = 'waiting';
+  player = gameserver.Player.create({ id: '', name: '' });
   role = gameserver.Role.ROLE_OBSERVER;
   server = new ServerConnection
 
@@ -26,6 +27,7 @@ export class Game {
     // message replay loop kicks in
     if (data.gameInit) {
       this.reset(data.gameInit.seed!)
+      this.player = data.gameInit.yourPlayer as gameserver.Player
       return
     }
     this.recording.push(data)
@@ -73,6 +75,7 @@ export class Game {
         drawTextScreen(`Waiting for your turn...`, vec2(240, 145), 20, new Color(1, 1, 1));
       }
     }
+    drawTextScreen(`Player ID ${this.player.id} (${this.player.name})`, vec2(200, 400), 20, new Color(1, 1, 1));
   }
 
   // the game state is never updated directly, we always
@@ -167,8 +170,8 @@ export class Game {
       return
     }
     console.log('handling event', { event, frame: this.frame })
-    if (event.roleChange) {
-      this.role = event.roleChange.role!
+    if (event.playerChange) {
+      this.role = event.playerChange.player === this.player.id ? gameserver.Role.ROLE_PLAYER : gameserver.Role.ROLE_OBSERVER;
     } else if (event.gameEvent) {
       this.tetris!.processEvent(event.gameEvent as gameserver.GameEvent);
     }

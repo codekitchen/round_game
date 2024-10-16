@@ -9,6 +9,109 @@ export namespace gameserver {
         ROLE_PLAYER = 1
     }
 
+    /** Properties of a Player. */
+    interface IPlayer {
+
+        /** Player id */
+        id?: (string|null);
+
+        /** Player name */
+        name?: (string|null);
+    }
+
+    /** Represents a Player. */
+    class Player implements IPlayer {
+
+        /**
+         * Constructs a new Player.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: gameserver.IPlayer);
+
+        /** Player id. */
+        public id: string;
+
+        /** Player name. */
+        public name: string;
+
+        /**
+         * Creates a new Player instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Player instance
+         */
+        public static create(properties?: gameserver.IPlayer): gameserver.Player;
+
+        /**
+         * Encodes the specified Player message. Does not implicitly {@link gameserver.Player.verify|verify} messages.
+         * @param message Player message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: gameserver.IPlayer, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified Player message, length delimited. Does not implicitly {@link gameserver.Player.verify|verify} messages.
+         * @param message Player message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: gameserver.IPlayer, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Player message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Player
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gameserver.Player;
+
+        /**
+         * Decodes a Player message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns Player
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gameserver.Player;
+
+        /**
+         * Verifies a Player message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a Player message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns Player
+         */
+        public static fromObject(object: { [k: string]: any }): gameserver.Player;
+
+        /**
+         * Creates a plain object from a Player message. Also converts values to other types if specified.
+         * @param message Player
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: gameserver.Player, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this Player to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for Player
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
     /** Properties of a GameMessage. */
     interface IGameMessage {
 
@@ -18,8 +121,8 @@ export namespace gameserver {
         /** GameMessage gameInit */
         gameInit?: (gameserver.IGameInit|null);
 
-        /** GameMessage roleChange */
-        roleChange?: (gameserver.IRoleChange|null);
+        /** GameMessage playerChange */
+        playerChange?: (gameserver.IPlayerChange|null);
 
         /** GameMessage heartbeat */
         heartbeat?: (gameserver.IHeartbeat|null);
@@ -46,8 +149,8 @@ export namespace gameserver {
         /** GameMessage gameInit. */
         public gameInit?: (gameserver.IGameInit|null);
 
-        /** GameMessage roleChange. */
-        public roleChange?: (gameserver.IRoleChange|null);
+        /** GameMessage playerChange. */
+        public playerChange?: (gameserver.IPlayerChange|null);
 
         /** GameMessage heartbeat. */
         public heartbeat?: (gameserver.IHeartbeat|null);
@@ -59,7 +162,7 @@ export namespace gameserver {
         public gameEvent?: (gameserver.IGameEvent|null);
 
         /** GameMessage msg. */
-        public msg?: ("gameInit"|"roleChange"|"heartbeat"|"passControl"|"gameEvent");
+        public msg?: ("gameInit"|"playerChange"|"heartbeat"|"passControl"|"gameEvent");
 
         /**
          * Creates a new GameMessage instance using the specified properties.
@@ -235,6 +338,9 @@ export namespace gameserver {
 
         /** GameInit seed */
         seed?: (number|null);
+
+        /** GameInit yourPlayer */
+        yourPlayer?: (gameserver.IPlayer|null);
     }
 
     /** Represents a GameInit. */
@@ -248,6 +354,9 @@ export namespace gameserver {
 
         /** GameInit seed. */
         public seed: number;
+
+        /** GameInit yourPlayer. */
+        public yourPlayer?: (gameserver.IPlayer|null);
 
         /**
          * Creates a new GameInit instance using the specified properties.
@@ -327,97 +436,97 @@ export namespace gameserver {
         public static getTypeUrl(typeUrlPrefix?: string): string;
     }
 
-    /** Properties of a RoleChange. */
-    interface IRoleChange {
+    /** Properties of a PlayerChange. */
+    interface IPlayerChange {
 
-        /** RoleChange role */
-        role?: (gameserver.Role|null);
+        /** PlayerChange player */
+        player?: (string|null);
     }
 
-    /** Represents a RoleChange. */
-    class RoleChange implements IRoleChange {
+    /** Represents a PlayerChange. */
+    class PlayerChange implements IPlayerChange {
 
         /**
-         * Constructs a new RoleChange.
+         * Constructs a new PlayerChange.
          * @param [properties] Properties to set
          */
-        constructor(properties?: gameserver.IRoleChange);
+        constructor(properties?: gameserver.IPlayerChange);
 
-        /** RoleChange role. */
-        public role: gameserver.Role;
+        /** PlayerChange player. */
+        public player: string;
 
         /**
-         * Creates a new RoleChange instance using the specified properties.
+         * Creates a new PlayerChange instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns RoleChange instance
+         * @returns PlayerChange instance
          */
-        public static create(properties?: gameserver.IRoleChange): gameserver.RoleChange;
+        public static create(properties?: gameserver.IPlayerChange): gameserver.PlayerChange;
 
         /**
-         * Encodes the specified RoleChange message. Does not implicitly {@link gameserver.RoleChange.verify|verify} messages.
-         * @param message RoleChange message or plain object to encode
+         * Encodes the specified PlayerChange message. Does not implicitly {@link gameserver.PlayerChange.verify|verify} messages.
+         * @param message PlayerChange message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: gameserver.IRoleChange, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: gameserver.IPlayerChange, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Encodes the specified RoleChange message, length delimited. Does not implicitly {@link gameserver.RoleChange.verify|verify} messages.
-         * @param message RoleChange message or plain object to encode
+         * Encodes the specified PlayerChange message, length delimited. Does not implicitly {@link gameserver.PlayerChange.verify|verify} messages.
+         * @param message PlayerChange message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encodeDelimited(message: gameserver.IRoleChange, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encodeDelimited(message: gameserver.IPlayerChange, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a RoleChange message from the specified reader or buffer.
+         * Decodes a PlayerChange message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns RoleChange
+         * @returns PlayerChange
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gameserver.RoleChange;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gameserver.PlayerChange;
 
         /**
-         * Decodes a RoleChange message from the specified reader or buffer, length delimited.
+         * Decodes a PlayerChange message from the specified reader or buffer, length delimited.
          * @param reader Reader or buffer to decode from
-         * @returns RoleChange
+         * @returns PlayerChange
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gameserver.RoleChange;
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gameserver.PlayerChange;
 
         /**
-         * Verifies a RoleChange message.
+         * Verifies a PlayerChange message.
          * @param message Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
         public static verify(message: { [k: string]: any }): (string|null);
 
         /**
-         * Creates a RoleChange message from a plain object. Also converts values to their respective internal types.
+         * Creates a PlayerChange message from a plain object. Also converts values to their respective internal types.
          * @param object Plain object
-         * @returns RoleChange
+         * @returns PlayerChange
          */
-        public static fromObject(object: { [k: string]: any }): gameserver.RoleChange;
+        public static fromObject(object: { [k: string]: any }): gameserver.PlayerChange;
 
         /**
-         * Creates a plain object from a RoleChange message. Also converts values to other types if specified.
-         * @param message RoleChange
+         * Creates a plain object from a PlayerChange message. Also converts values to other types if specified.
+         * @param message PlayerChange
          * @param [options] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: gameserver.RoleChange, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(message: gameserver.PlayerChange, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
-         * Converts this RoleChange to JSON.
+         * Converts this PlayerChange to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };
 
         /**
-         * Gets the default type url for RoleChange
+         * Gets the default type url for PlayerChange
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */
@@ -606,6 +715,103 @@ export namespace gameserver {
 
         /**
          * Gets the default type url for PassControl
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a PlayerList. */
+    interface IPlayerList {
+
+        /** PlayerList players */
+        players?: (gameserver.IPlayer[]|null);
+    }
+
+    /** Represents a PlayerList. */
+    class PlayerList implements IPlayerList {
+
+        /**
+         * Constructs a new PlayerList.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: gameserver.IPlayerList);
+
+        /** PlayerList players. */
+        public players: gameserver.IPlayer[];
+
+        /**
+         * Creates a new PlayerList instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns PlayerList instance
+         */
+        public static create(properties?: gameserver.IPlayerList): gameserver.PlayerList;
+
+        /**
+         * Encodes the specified PlayerList message. Does not implicitly {@link gameserver.PlayerList.verify|verify} messages.
+         * @param message PlayerList message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: gameserver.IPlayerList, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified PlayerList message, length delimited. Does not implicitly {@link gameserver.PlayerList.verify|verify} messages.
+         * @param message PlayerList message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: gameserver.IPlayerList, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a PlayerList message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns PlayerList
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gameserver.PlayerList;
+
+        /**
+         * Decodes a PlayerList message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns PlayerList
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gameserver.PlayerList;
+
+        /**
+         * Verifies a PlayerList message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a PlayerList message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns PlayerList
+         */
+        public static fromObject(object: { [k: string]: any }): gameserver.PlayerList;
+
+        /**
+         * Creates a plain object from a PlayerList message. Also converts values to other types if specified.
+         * @param message PlayerList
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: gameserver.PlayerList, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this PlayerList to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for PlayerList
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */

@@ -30,6 +30,233 @@ export const gameserver = $root.gameserver = (() => {
         return values;
     })();
 
+    gameserver.Player = (function() {
+
+        /**
+         * Properties of a Player.
+         * @memberof gameserver
+         * @interface IPlayer
+         * @property {string|null} [id] Player id
+         * @property {string|null} [name] Player name
+         */
+
+        /**
+         * Constructs a new Player.
+         * @memberof gameserver
+         * @classdesc Represents a Player.
+         * @implements IPlayer
+         * @constructor
+         * @param {gameserver.IPlayer=} [properties] Properties to set
+         */
+        function Player(properties) {
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Player id.
+         * @member {string} id
+         * @memberof gameserver.Player
+         * @instance
+         */
+        Player.prototype.id = "";
+
+        /**
+         * Player name.
+         * @member {string} name
+         * @memberof gameserver.Player
+         * @instance
+         */
+        Player.prototype.name = "";
+
+        /**
+         * Creates a new Player instance using the specified properties.
+         * @function create
+         * @memberof gameserver.Player
+         * @static
+         * @param {gameserver.IPlayer=} [properties] Properties to set
+         * @returns {gameserver.Player} Player instance
+         */
+        Player.create = function create(properties) {
+            return new Player(properties);
+        };
+
+        /**
+         * Encodes the specified Player message. Does not implicitly {@link gameserver.Player.verify|verify} messages.
+         * @function encode
+         * @memberof gameserver.Player
+         * @static
+         * @param {gameserver.IPlayer} message Player message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Player.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.id != null && Object.hasOwnProperty.call(message, "id"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+            if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Player message, length delimited. Does not implicitly {@link gameserver.Player.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gameserver.Player
+         * @static
+         * @param {gameserver.IPlayer} message Player message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Player.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a Player message from the specified reader or buffer.
+         * @function decode
+         * @memberof gameserver.Player
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gameserver.Player} Player
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Player.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.Player();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1: {
+                        message.id = reader.string();
+                        break;
+                    }
+                case 2: {
+                        message.name = reader.string();
+                        break;
+                    }
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a Player message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gameserver.Player
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gameserver.Player} Player
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Player.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a Player message.
+         * @function verify
+         * @memberof gameserver.Player
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Player.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.id != null && message.hasOwnProperty("id"))
+                if (!$util.isString(message.id))
+                    return "id: string expected";
+            if (message.name != null && message.hasOwnProperty("name"))
+                if (!$util.isString(message.name))
+                    return "name: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a Player message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gameserver.Player
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gameserver.Player} Player
+         */
+        Player.fromObject = function fromObject(object) {
+            if (object instanceof $root.gameserver.Player)
+                return object;
+            let message = new $root.gameserver.Player();
+            if (object.id != null)
+                message.id = String(object.id);
+            if (object.name != null)
+                message.name = String(object.name);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a Player message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gameserver.Player
+         * @static
+         * @param {gameserver.Player} message Player
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Player.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            let object = {};
+            if (options.defaults) {
+                object.id = "";
+                object.name = "";
+            }
+            if (message.id != null && message.hasOwnProperty("id"))
+                object.id = message.id;
+            if (message.name != null && message.hasOwnProperty("name"))
+                object.name = message.name;
+            return object;
+        };
+
+        /**
+         * Converts this Player to JSON.
+         * @function toJSON
+         * @memberof gameserver.Player
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Player.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for Player
+         * @function getTypeUrl
+         * @memberof gameserver.Player
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        Player.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/gameserver.Player";
+        };
+
+        return Player;
+    })();
+
     gameserver.GameMessage = (function() {
 
         /**
@@ -38,7 +265,7 @@ export const gameserver = $root.gameserver = (() => {
          * @interface IGameMessage
          * @property {number|null} [frame] GameMessage frame
          * @property {gameserver.IGameInit|null} [gameInit] GameMessage gameInit
-         * @property {gameserver.IRoleChange|null} [roleChange] GameMessage roleChange
+         * @property {gameserver.IPlayerChange|null} [playerChange] GameMessage playerChange
          * @property {gameserver.IHeartbeat|null} [heartbeat] GameMessage heartbeat
          * @property {gameserver.IPassControl|null} [passControl] GameMessage passControl
          * @property {gameserver.IGameEvent|null} [gameEvent] GameMessage gameEvent
@@ -76,12 +303,12 @@ export const gameserver = $root.gameserver = (() => {
         GameMessage.prototype.gameInit = null;
 
         /**
-         * GameMessage roleChange.
-         * @member {gameserver.IRoleChange|null|undefined} roleChange
+         * GameMessage playerChange.
+         * @member {gameserver.IPlayerChange|null|undefined} playerChange
          * @memberof gameserver.GameMessage
          * @instance
          */
-        GameMessage.prototype.roleChange = null;
+        GameMessage.prototype.playerChange = null;
 
         /**
          * GameMessage heartbeat.
@@ -112,12 +339,12 @@ export const gameserver = $root.gameserver = (() => {
 
         /**
          * GameMessage msg.
-         * @member {"gameInit"|"roleChange"|"heartbeat"|"passControl"|"gameEvent"|undefined} msg
+         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"gameEvent"|undefined} msg
          * @memberof gameserver.GameMessage
          * @instance
          */
         Object.defineProperty(GameMessage.prototype, "msg", {
-            get: $util.oneOfGetter($oneOfFields = ["gameInit", "roleChange", "heartbeat", "passControl", "gameEvent"]),
+            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "gameEvent"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -149,8 +376,8 @@ export const gameserver = $root.gameserver = (() => {
                 writer.uint32(/* id 1, wireType 0 =*/8).int32(message.frame);
             if (message.gameInit != null && Object.hasOwnProperty.call(message, "gameInit"))
                 $root.gameserver.GameInit.encode(message.gameInit, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
-            if (message.roleChange != null && Object.hasOwnProperty.call(message, "roleChange"))
-                $root.gameserver.RoleChange.encode(message.roleChange, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+            if (message.playerChange != null && Object.hasOwnProperty.call(message, "playerChange"))
+                $root.gameserver.PlayerChange.encode(message.playerChange, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
             if (message.heartbeat != null && Object.hasOwnProperty.call(message, "heartbeat"))
                 $root.gameserver.Heartbeat.encode(message.heartbeat, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
             if (message.passControl != null && Object.hasOwnProperty.call(message, "passControl"))
@@ -200,7 +427,7 @@ export const gameserver = $root.gameserver = (() => {
                         break;
                     }
                 case 3: {
-                        message.roleChange = $root.gameserver.RoleChange.decode(reader, reader.uint32());
+                        message.playerChange = $root.gameserver.PlayerChange.decode(reader, reader.uint32());
                         break;
                     }
                 case 4: {
@@ -262,14 +489,14 @@ export const gameserver = $root.gameserver = (() => {
                         return "gameInit." + error;
                 }
             }
-            if (message.roleChange != null && message.hasOwnProperty("roleChange")) {
+            if (message.playerChange != null && message.hasOwnProperty("playerChange")) {
                 if (properties.msg === 1)
                     return "msg: multiple values";
                 properties.msg = 1;
                 {
-                    let error = $root.gameserver.RoleChange.verify(message.roleChange);
+                    let error = $root.gameserver.PlayerChange.verify(message.playerChange);
                     if (error)
-                        return "roleChange." + error;
+                        return "playerChange." + error;
                 }
             }
             if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) {
@@ -324,10 +551,10 @@ export const gameserver = $root.gameserver = (() => {
                     throw TypeError(".gameserver.GameMessage.gameInit: object expected");
                 message.gameInit = $root.gameserver.GameInit.fromObject(object.gameInit);
             }
-            if (object.roleChange != null) {
-                if (typeof object.roleChange !== "object")
-                    throw TypeError(".gameserver.GameMessage.roleChange: object expected");
-                message.roleChange = $root.gameserver.RoleChange.fromObject(object.roleChange);
+            if (object.playerChange != null) {
+                if (typeof object.playerChange !== "object")
+                    throw TypeError(".gameserver.GameMessage.playerChange: object expected");
+                message.playerChange = $root.gameserver.PlayerChange.fromObject(object.playerChange);
             }
             if (object.heartbeat != null) {
                 if (typeof object.heartbeat !== "object")
@@ -369,10 +596,10 @@ export const gameserver = $root.gameserver = (() => {
                 if (options.oneofs)
                     object.msg = "gameInit";
             }
-            if (message.roleChange != null && message.hasOwnProperty("roleChange")) {
-                object.roleChange = $root.gameserver.RoleChange.toObject(message.roleChange, options);
+            if (message.playerChange != null && message.hasOwnProperty("playerChange")) {
+                object.playerChange = $root.gameserver.PlayerChange.toObject(message.playerChange, options);
                 if (options.oneofs)
-                    object.msg = "roleChange";
+                    object.msg = "playerChange";
             }
             if (message.heartbeat != null && message.hasOwnProperty("heartbeat")) {
                 object.heartbeat = $root.gameserver.Heartbeat.toObject(message.heartbeat, options);
@@ -603,6 +830,7 @@ export const gameserver = $root.gameserver = (() => {
          * @memberof gameserver
          * @interface IGameInit
          * @property {number|null} [seed] GameInit seed
+         * @property {gameserver.IPlayer|null} [yourPlayer] GameInit yourPlayer
          */
 
         /**
@@ -627,6 +855,14 @@ export const gameserver = $root.gameserver = (() => {
          * @instance
          */
         GameInit.prototype.seed = 0;
+
+        /**
+         * GameInit yourPlayer.
+         * @member {gameserver.IPlayer|null|undefined} yourPlayer
+         * @memberof gameserver.GameInit
+         * @instance
+         */
+        GameInit.prototype.yourPlayer = null;
 
         /**
          * Creates a new GameInit instance using the specified properties.
@@ -654,6 +890,8 @@ export const gameserver = $root.gameserver = (() => {
                 writer = $Writer.create();
             if (message.seed != null && Object.hasOwnProperty.call(message, "seed"))
                 writer.uint32(/* id 1, wireType 0 =*/8).int32(message.seed);
+            if (message.yourPlayer != null && Object.hasOwnProperty.call(message, "yourPlayer"))
+                $root.gameserver.Player.encode(message.yourPlayer, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
             return writer;
         };
 
@@ -690,6 +928,10 @@ export const gameserver = $root.gameserver = (() => {
                 switch (tag >>> 3) {
                 case 1: {
                         message.seed = reader.int32();
+                        break;
+                    }
+                case 2: {
+                        message.yourPlayer = $root.gameserver.Player.decode(reader, reader.uint32());
                         break;
                     }
                 default:
@@ -730,6 +972,11 @@ export const gameserver = $root.gameserver = (() => {
             if (message.seed != null && message.hasOwnProperty("seed"))
                 if (!$util.isInteger(message.seed))
                     return "seed: integer expected";
+            if (message.yourPlayer != null && message.hasOwnProperty("yourPlayer")) {
+                let error = $root.gameserver.Player.verify(message.yourPlayer);
+                if (error)
+                    return "yourPlayer." + error;
+            }
             return null;
         };
 
@@ -747,6 +994,11 @@ export const gameserver = $root.gameserver = (() => {
             let message = new $root.gameserver.GameInit();
             if (object.seed != null)
                 message.seed = object.seed | 0;
+            if (object.yourPlayer != null) {
+                if (typeof object.yourPlayer !== "object")
+                    throw TypeError(".gameserver.GameInit.yourPlayer: object expected");
+                message.yourPlayer = $root.gameserver.Player.fromObject(object.yourPlayer);
+            }
             return message;
         };
 
@@ -763,10 +1015,14 @@ export const gameserver = $root.gameserver = (() => {
             if (!options)
                 options = {};
             let object = {};
-            if (options.defaults)
+            if (options.defaults) {
                 object.seed = 0;
+                object.yourPlayer = null;
+            }
             if (message.seed != null && message.hasOwnProperty("seed"))
                 object.seed = message.seed;
+            if (message.yourPlayer != null && message.hasOwnProperty("yourPlayer"))
+                object.yourPlayer = $root.gameserver.Player.toObject(message.yourPlayer, options);
             return object;
         };
 
@@ -799,24 +1055,24 @@ export const gameserver = $root.gameserver = (() => {
         return GameInit;
     })();
 
-    gameserver.RoleChange = (function() {
+    gameserver.PlayerChange = (function() {
 
         /**
-         * Properties of a RoleChange.
+         * Properties of a PlayerChange.
          * @memberof gameserver
-         * @interface IRoleChange
-         * @property {gameserver.Role|null} [role] RoleChange role
+         * @interface IPlayerChange
+         * @property {string|null} [player] PlayerChange player
          */
 
         /**
-         * Constructs a new RoleChange.
+         * Constructs a new PlayerChange.
          * @memberof gameserver
-         * @classdesc Represents a RoleChange.
-         * @implements IRoleChange
+         * @classdesc Represents a PlayerChange.
+         * @implements IPlayerChange
          * @constructor
-         * @param {gameserver.IRoleChange=} [properties] Properties to set
+         * @param {gameserver.IPlayerChange=} [properties] Properties to set
          */
-        function RoleChange(properties) {
+        function PlayerChange(properties) {
             if (properties)
                 for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -824,75 +1080,75 @@ export const gameserver = $root.gameserver = (() => {
         }
 
         /**
-         * RoleChange role.
-         * @member {gameserver.Role} role
-         * @memberof gameserver.RoleChange
+         * PlayerChange player.
+         * @member {string} player
+         * @memberof gameserver.PlayerChange
          * @instance
          */
-        RoleChange.prototype.role = 0;
+        PlayerChange.prototype.player = "";
 
         /**
-         * Creates a new RoleChange instance using the specified properties.
+         * Creates a new PlayerChange instance using the specified properties.
          * @function create
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
-         * @param {gameserver.IRoleChange=} [properties] Properties to set
-         * @returns {gameserver.RoleChange} RoleChange instance
+         * @param {gameserver.IPlayerChange=} [properties] Properties to set
+         * @returns {gameserver.PlayerChange} PlayerChange instance
          */
-        RoleChange.create = function create(properties) {
-            return new RoleChange(properties);
+        PlayerChange.create = function create(properties) {
+            return new PlayerChange(properties);
         };
 
         /**
-         * Encodes the specified RoleChange message. Does not implicitly {@link gameserver.RoleChange.verify|verify} messages.
+         * Encodes the specified PlayerChange message. Does not implicitly {@link gameserver.PlayerChange.verify|verify} messages.
          * @function encode
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
-         * @param {gameserver.IRoleChange} message RoleChange message or plain object to encode
+         * @param {gameserver.IPlayerChange} message PlayerChange message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        RoleChange.encode = function encode(message, writer) {
+        PlayerChange.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.role != null && Object.hasOwnProperty.call(message, "role"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.role);
+            if (message.player != null && Object.hasOwnProperty.call(message, "player"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.player);
             return writer;
         };
 
         /**
-         * Encodes the specified RoleChange message, length delimited. Does not implicitly {@link gameserver.RoleChange.verify|verify} messages.
+         * Encodes the specified PlayerChange message, length delimited. Does not implicitly {@link gameserver.PlayerChange.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
-         * @param {gameserver.IRoleChange} message RoleChange message or plain object to encode
+         * @param {gameserver.IPlayerChange} message PlayerChange message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        RoleChange.encodeDelimited = function encodeDelimited(message, writer) {
+        PlayerChange.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a RoleChange message from the specified reader or buffer.
+         * Decodes a PlayerChange message from the specified reader or buffer.
          * @function decode
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gameserver.RoleChange} RoleChange
+         * @returns {gameserver.PlayerChange} PlayerChange
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        RoleChange.decode = function decode(reader, length) {
+        PlayerChange.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.RoleChange();
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.PlayerChange();
             while (reader.pos < end) {
                 let tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1: {
-                        message.role = reader.int32();
+                        message.player = reader.string();
                         break;
                     }
                 default:
@@ -904,121 +1160,102 @@ export const gameserver = $root.gameserver = (() => {
         };
 
         /**
-         * Decodes a RoleChange message from the specified reader or buffer, length delimited.
+         * Decodes a PlayerChange message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gameserver.RoleChange} RoleChange
+         * @returns {gameserver.PlayerChange} PlayerChange
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        RoleChange.decodeDelimited = function decodeDelimited(reader) {
+        PlayerChange.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a RoleChange message.
+         * Verifies a PlayerChange message.
          * @function verify
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        RoleChange.verify = function verify(message) {
+        PlayerChange.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.role != null && message.hasOwnProperty("role"))
-                switch (message.role) {
-                default:
-                    return "role: enum value expected";
-                case 0:
-                case 1:
-                    break;
-                }
+            if (message.player != null && message.hasOwnProperty("player"))
+                if (!$util.isString(message.player))
+                    return "player: string expected";
             return null;
         };
 
         /**
-         * Creates a RoleChange message from a plain object. Also converts values to their respective internal types.
+         * Creates a PlayerChange message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gameserver.RoleChange} RoleChange
+         * @returns {gameserver.PlayerChange} PlayerChange
          */
-        RoleChange.fromObject = function fromObject(object) {
-            if (object instanceof $root.gameserver.RoleChange)
+        PlayerChange.fromObject = function fromObject(object) {
+            if (object instanceof $root.gameserver.PlayerChange)
                 return object;
-            let message = new $root.gameserver.RoleChange();
-            switch (object.role) {
-            default:
-                if (typeof object.role === "number") {
-                    message.role = object.role;
-                    break;
-                }
-                break;
-            case "ROLE_OBSERVER":
-            case 0:
-                message.role = 0;
-                break;
-            case "ROLE_PLAYER":
-            case 1:
-                message.role = 1;
-                break;
-            }
+            let message = new $root.gameserver.PlayerChange();
+            if (object.player != null)
+                message.player = String(object.player);
             return message;
         };
 
         /**
-         * Creates a plain object from a RoleChange message. Also converts values to other types if specified.
+         * Creates a plain object from a PlayerChange message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
-         * @param {gameserver.RoleChange} message RoleChange
+         * @param {gameserver.PlayerChange} message PlayerChange
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        RoleChange.toObject = function toObject(message, options) {
+        PlayerChange.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             let object = {};
             if (options.defaults)
-                object.role = options.enums === String ? "ROLE_OBSERVER" : 0;
-            if (message.role != null && message.hasOwnProperty("role"))
-                object.role = options.enums === String ? $root.gameserver.Role[message.role] === undefined ? message.role : $root.gameserver.Role[message.role] : message.role;
+                object.player = "";
+            if (message.player != null && message.hasOwnProperty("player"))
+                object.player = message.player;
             return object;
         };
 
         /**
-         * Converts this RoleChange to JSON.
+         * Converts this PlayerChange to JSON.
          * @function toJSON
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        RoleChange.prototype.toJSON = function toJSON() {
+        PlayerChange.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
         /**
-         * Gets the default type url for RoleChange
+         * Gets the default type url for PlayerChange
          * @function getTypeUrl
-         * @memberof gameserver.RoleChange
+         * @memberof gameserver.PlayerChange
          * @static
          * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns {string} The default type url
          */
-        RoleChange.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        PlayerChange.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
             if (typeUrlPrefix === undefined) {
                 typeUrlPrefix = "type.googleapis.com";
             }
-            return typeUrlPrefix + "/gameserver.RoleChange";
+            return typeUrlPrefix + "/gameserver.PlayerChange";
         };
 
-        return RoleChange;
+        return PlayerChange;
     })();
 
     gameserver.GameEvent = (function() {
@@ -1397,6 +1634,230 @@ export const gameserver = $root.gameserver = (() => {
         };
 
         return PassControl;
+    })();
+
+    gameserver.PlayerList = (function() {
+
+        /**
+         * Properties of a PlayerList.
+         * @memberof gameserver
+         * @interface IPlayerList
+         * @property {Array.<gameserver.IPlayer>|null} [players] PlayerList players
+         */
+
+        /**
+         * Constructs a new PlayerList.
+         * @memberof gameserver
+         * @classdesc Represents a PlayerList.
+         * @implements IPlayerList
+         * @constructor
+         * @param {gameserver.IPlayerList=} [properties] Properties to set
+         */
+        function PlayerList(properties) {
+            this.players = [];
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * PlayerList players.
+         * @member {Array.<gameserver.IPlayer>} players
+         * @memberof gameserver.PlayerList
+         * @instance
+         */
+        PlayerList.prototype.players = $util.emptyArray;
+
+        /**
+         * Creates a new PlayerList instance using the specified properties.
+         * @function create
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {gameserver.IPlayerList=} [properties] Properties to set
+         * @returns {gameserver.PlayerList} PlayerList instance
+         */
+        PlayerList.create = function create(properties) {
+            return new PlayerList(properties);
+        };
+
+        /**
+         * Encodes the specified PlayerList message. Does not implicitly {@link gameserver.PlayerList.verify|verify} messages.
+         * @function encode
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {gameserver.IPlayerList} message PlayerList message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        PlayerList.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.players != null && message.players.length)
+                for (let i = 0; i < message.players.length; ++i)
+                    $root.gameserver.Player.encode(message.players[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified PlayerList message, length delimited. Does not implicitly {@link gameserver.PlayerList.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {gameserver.IPlayerList} message PlayerList message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        PlayerList.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a PlayerList message from the specified reader or buffer.
+         * @function decode
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gameserver.PlayerList} PlayerList
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        PlayerList.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.PlayerList();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1: {
+                        if (!(message.players && message.players.length))
+                            message.players = [];
+                        message.players.push($root.gameserver.Player.decode(reader, reader.uint32()));
+                        break;
+                    }
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a PlayerList message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gameserver.PlayerList} PlayerList
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        PlayerList.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a PlayerList message.
+         * @function verify
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        PlayerList.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.players != null && message.hasOwnProperty("players")) {
+                if (!Array.isArray(message.players))
+                    return "players: array expected";
+                for (let i = 0; i < message.players.length; ++i) {
+                    let error = $root.gameserver.Player.verify(message.players[i]);
+                    if (error)
+                        return "players." + error;
+                }
+            }
+            return null;
+        };
+
+        /**
+         * Creates a PlayerList message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gameserver.PlayerList} PlayerList
+         */
+        PlayerList.fromObject = function fromObject(object) {
+            if (object instanceof $root.gameserver.PlayerList)
+                return object;
+            let message = new $root.gameserver.PlayerList();
+            if (object.players) {
+                if (!Array.isArray(object.players))
+                    throw TypeError(".gameserver.PlayerList.players: array expected");
+                message.players = [];
+                for (let i = 0; i < object.players.length; ++i) {
+                    if (typeof object.players[i] !== "object")
+                        throw TypeError(".gameserver.PlayerList.players: object expected");
+                    message.players[i] = $root.gameserver.Player.fromObject(object.players[i]);
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a PlayerList message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {gameserver.PlayerList} message PlayerList
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        PlayerList.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            let object = {};
+            if (options.arrays || options.defaults)
+                object.players = [];
+            if (message.players && message.players.length) {
+                object.players = [];
+                for (let j = 0; j < message.players.length; ++j)
+                    object.players[j] = $root.gameserver.Player.toObject(message.players[j], options);
+            }
+            return object;
+        };
+
+        /**
+         * Converts this PlayerList to JSON.
+         * @function toJSON
+         * @memberof gameserver.PlayerList
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        PlayerList.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for PlayerList
+         * @function getTypeUrl
+         * @memberof gameserver.PlayerList
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        PlayerList.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/gameserver.PlayerList";
+        };
+
+        return PlayerList;
     })();
 
     return gameserver;

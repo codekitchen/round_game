@@ -8,12 +8,17 @@ enum Role {
   ROLE_PLAYER = 1;
 }
 
+message Player {
+  string id = 1;
+  string name = 2;
+}
+
 message GameMessage {
   int32 frame = 1;
   oneof msg {
     // administrative events
     GameInit gameInit = 2;
-    RoleChange roleChange = 3;
+    PlayerChange playerChange = 3;
     Heartbeat heartbeat = 4;
     PassControl passControl = 5;
 
@@ -28,10 +33,11 @@ message Heartbeat {
 
 message GameInit {
   int32 seed = 1;
+  Player yourPlayer = 2;
 }
 
-message RoleChange {
-  Role role = 1;
+message PlayerChange {
+  string player = 1;
 }
 
 message GameEvent {
@@ -39,4 +45,8 @@ message GameEvent {
 }
 
 message PassControl {
+}
+
+message PlayerList {
+  repeated Player players = 1;
 }

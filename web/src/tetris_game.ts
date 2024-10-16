@@ -12,6 +12,7 @@ class Mino extends EngineObject {
   }
 
   render(): void {
+    // cool retro vibes
     drawRect(this.pos, vec2(1), new Color(0, 0, 0));
     drawRect(this.pos, vec2(0.85), this.color);
   }
