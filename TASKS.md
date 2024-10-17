@@ -2,6 +2,9 @@
 - [x] basic tetris imlementation
 - [x] record and replay an entire game
 - [x] game over condition
+- [x] UI events shouldn't be tied to server frame
+- [ ] player needs to handle UI events like player list from server, currently ignoring until observer
+- [ ] game pauses in background tab
 
 # Server
 - [x] serve static assets

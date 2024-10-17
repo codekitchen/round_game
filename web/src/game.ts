@@ -1,3 +1,4 @@
+import { isUIEvent } from "./events.js";
 import { Color, drawTextScreen, EngineObject, engineObjectsUpdate, frame, setFontDefault, vec2, Vector2 } from "./littlejs.esm.js";
 import { PlayerList } from "./player_list.js";
 import { gameserver } from "./protocol/gameserver.js";
@@ -148,6 +149,9 @@ export class Game {
 
   replayFromRemote() {
     let events = this.recording
+
+    this.normalizeEvents(events);
+
     if (events.length > 0) {
       let horizonFrame = events[events.length - 1].frame
       let fastTargetFrame = horizonFrame - OBSERVER_DELAY
@@ -171,7 +175,18 @@ export class Game {
         let event = events.shift()!;
         this.handleEvent(event);
       }
-      this.stepSimulation();
+
+      if (events.length > 0) {
+        this.stepSimulation();
+      }
+    }
+  }
+
+  private normalizeEvents(events: gameserver.GameMessage[]) {
+    for (let ev of events) {
+      if (isUIEvent(ev)) {
+        ev.frame = this.frame;
+      }
     }
   }
 
@@ -184,7 +199,7 @@ export class Game {
     if (event.playerChange) {
       this.role = event.playerChange.player === this.player.id ? gameserver.Role.ROLE_PLAYER : gameserver.Role.ROLE_OBSERVER;
     } else if (event.playerList) {
-      this.playerList.list = event.playerList.players as gameserver.Player[]
+      this.playerList.updatePlayerList(event.playerList.players as gameserver.Player[])
     } else if (event.gameEvent) {
       this.tetris!.processEvent(event.gameEvent as gameserver.GameEvent);
     }

@@ -233,7 +233,6 @@ func (g *Game) sendPlayerList() {
 	}
 	for c := range g.clients.All() {
 		c.SendMessage(&protocol.GameMessage{
-			Frame: g.mostRecentFrame + 1,
 			Msg: &protocol.GameMessage_PlayerList{
 				PlayerList: list,
 			},
