@@ -1,11 +1,12 @@
-import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown, cameraPos, drawRect, Color } from "./littlejs.esm.js";
-import { gameserver } from "./protocol/gameserver.js";
-import { SHAPES, NUM_SHAPES } from "./shapes.js";
+import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown, cameraPos, drawRect, Color } from "./littlejs.esm"
+import { gameserver } from "./protocol/gameserver"
+import { SHAPES, NUM_SHAPES } from "./shapes"
+import { MultiplayerObject } from "./multiplayer_object"
 
 var tetrisGame: TetrisGame;
 
 // One segment of a tetromino
-class Mino extends EngineObject {
+class Mino extends MultiplayerObject {
   constructor(type: number) {
     super();
     this.color = SHAPES[type].color;
@@ -19,7 +20,7 @@ class Mino extends EngineObject {
 }
 
 // Tetromino piece
-class Piece extends EngineObject {
+class Piece extends MultiplayerObject {
   static FAST_DROP_DELAY = 3;
   dropDelay = 14;
   dropCounter = 0;
@@ -29,7 +30,7 @@ class Piece extends EngineObject {
       this.addChild(new Mino(type), v);
     }
   }
-  update() {
+  lockstepUpdate() {
     this.dropCounter++;
     const dropNow = (tetrisGame.dropFast && this.dropCounter > Piece.FAST_DROP_DELAY) || (this.dropCounter > this.dropDelay);
     if (dropNow) {
@@ -76,7 +77,7 @@ class Piece extends EngineObject {
   render() { }
 }
 
-export class TetrisGame extends EngineObject {
+export class TetrisGame extends MultiplayerObject {
   static WIDTH = 10
   static HEIGHT = 20
   grid: (Mino|undefined)[] = Array(TetrisGame.WIDTH * TetrisGame.HEIGHT)
@@ -96,7 +97,7 @@ export class TetrisGame extends EngineObject {
     this.newPiece();
     tetrisGame = this; // implicit singleton
   }
-  update(): void {
+  lockstepUpdate(): void {
     this.passControl = false;
   }
   newPiece() {

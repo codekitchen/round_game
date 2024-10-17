@@ -1,5 +1,6 @@
 import { isUIEvent } from "./events.js";
 import { Color, drawTextScreen, EngineObject, engineObjectsUpdate, frame, setFontDefault, vec2, Vector2 } from "./littlejs.esm.js";
+import { multiplayerObjecsUpdate } from "./multiplayer_object.js";
 import { PlayerList } from "./player_list.js";
 import { gameserver } from "./protocol/gameserver.js";
 import { ServerConnection } from "./server.js";
@@ -143,7 +144,7 @@ export class Game {
   }
 
   stepSimulation() {
-    engineObjectsUpdate();
+    multiplayerObjecsUpdate();
     this.frame++;
   }
 
