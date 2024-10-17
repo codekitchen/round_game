@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec ssh ${ROUNDGAME_HOST} -- journalctl -u roundgame -f

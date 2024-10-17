@@ -37,6 +37,7 @@
 - [x] Deploy to an instance, probably Fargate. Use aws copilot?
 - [x] Switch from copilot+Fargate to just an EC2 instance, deploys are way too slow.
 - [x] Will need HTTPS, so SSL cert. roundrobin.codekitchen.net?
+- [x] Even faster deploys -- drop docker, just use static binary and systemctl
 
 # Refactor
 - [x] client role handling is smelly

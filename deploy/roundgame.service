@@ -1,0 +1,13 @@
+# install into /etc/systemd/system/
+[Unit]
+Description=RoundGame
+After=syslog.target network.target
+
+[Service]
+ExecStart=/data/app/bin/roundgame 0.0.0.0:8080
+User=ubuntu
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

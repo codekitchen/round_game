@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"embed"
 	"expvar"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
@@ -13,6 +15,9 @@ import (
 
 	"github.com/codekitchen/roundgame/internal/server"
 )
+
+//go:embed web/dst
+var static embed.FS
 
 func main() {
 	err := run()
@@ -38,10 +43,11 @@ func run() error {
 	}
 	slog.Info(fmt.Sprintf("listening on http://%v", l.Addr()))
 
+	files, _ := fs.Sub(static, "web/dst")
+
 	handler := http.NewServeMux()
-	fs := http.FileServer(http.Dir("web/dst/"))
 	handler.Handle("/ws", server.New())
-	handler.Handle("/", fs)
+	handler.Handle("/", http.FileServer(http.FS(files)))
 	handler.Handle("/debug/vars", expvar.Handler())
 
 	s := &http.Server{
