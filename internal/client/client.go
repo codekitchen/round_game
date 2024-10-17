@@ -42,7 +42,7 @@ type Client struct {
 	stopped  chan struct{}
 }
 
-var playerNames = []string{"🤩", "🐟", "🐙"}
+var playerNames = []string{"🐙", "🦊", "🦄", "🐼", "🦉", "🐳", "😺", "🍁", "🍀", "🌵", "🌲", "🌸", "🐹", "🪩", "👾", "🎃"}
 
 var nextClientID atomic.Uint32
 
