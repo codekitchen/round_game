@@ -13,15 +13,19 @@ class Avatar extends EngineObject {
 export class PlayerList extends EngineObject {
   list: gameserver.Player[] = []
   you?: gameserver.Player
+  avatars: EngineObject[] = []
 
   updatePlayerList(list: gameserver.Player[]) {
     this.list = list
-    for (let c of this.children) {
+    for (let c of this.avatars) {
       c.destroy()
     }
+    this.avatars = []
     let i = 0
     this.list.forEach(p => {
-      this.addChild(new Avatar(p.name), vec2(i++, 0))
+      let a = new Avatar(p.name)
+      this.avatars.push(a)
+      this.addChild(a, vec2(i++, 0))
     })
   }
 

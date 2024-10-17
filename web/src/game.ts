@@ -17,6 +17,7 @@ export class Game {
   frame = 0;
   lastEventFrame = 0;
   recording: gameserver.GameMessage[] = [];
+  uiEvents: gameserver.GameMessage[] = [];
   gameState: 'waiting' | 'playing' | 'gameover' = 'waiting';
   player = gameserver.Player.create({ id: '', name: '' });
   role = gameserver.Role.ROLE_OBSERVER;
@@ -29,18 +30,20 @@ export class Game {
     this.ui.addChild(this.playerList = new PlayerList(), vec2(-8, 10))
   }
 
-  onmessage = (data: gameserver.GameMessage) => {
+  onmessage = (ev: gameserver.GameMessage) => {
     // special handling of game init message which needs to arrive before the
     // message replay loop kicks in
-    if (data.gameInit) {
-      this.reset(data.gameInit.seed!)
-      this.player = data.gameInit.yourPlayer as gameserver.Player
+    if (ev.gameInit) {
+      this.reset(ev.gameInit.seed!)
+      this.player = ev.gameInit.yourPlayer as gameserver.Player
       this.playerList.you = this.player
-    } else if (data.ping) {
+    } else if (ev.ping) {
       // ignore pings, they're just to trigger
       // manualEngineUpdate() calls
+    } else if (isUIEvent(ev)) {
+      this.uiEvents.push(ev)
     } else {
-      this.recording.push(data)
+      this.recording.push(ev)
     }
     // websocket event gives us an opportunity to do an update while
     // the tab is in the background
@@ -64,6 +67,8 @@ export class Game {
     this.gameState = 'playing';
     this.frame = this.lastEventFrame = 0;
     this.role = gameserver.Role.ROLE_OBSERVER;
+    this.uiEvents = [];
+    this.recording = [];
   }
 
   renderPost() {
@@ -125,7 +130,8 @@ export class Game {
     for (let ev of events) {
       this.sendEvent(ev);
     }
-    this.replayLocally(events);
+    this.replayCurrentEvents(events);
+    this.replayUIEvents();
     this.stepSimulation();
   }
 
@@ -143,13 +149,6 @@ export class Game {
     this.server.send(ev);
   }
 
-  replayLocally(events: gameserver.GameMessage[]) {
-    while (events.length > 0) {
-      const event = events.shift()!;
-      this.handleEvent(event);
-    }
-  }
-
   stepSimulation() {
     multiplayerObjecsUpdate();
     this.frame++;
@@ -157,8 +156,6 @@ export class Game {
 
   replayFromRemote() {
     let events = this.recording
-
-    this.normalizeEvents(events);
 
     if (events.length > 0) {
       let horizonFrame = events[events.length - 1].frame
@@ -179,22 +176,21 @@ export class Game {
       }
 
       // now we are caught up, replay in real time
-      while (events.length > 0 && events[0].frame <= this.frame) {
-        let event = events.shift()!;
-        this.handleEvent(event);
-      }
+      this.replayCurrentEvents(events);
+      this.replayUIEvents();
 
+      // if there's still events on the queue, they are in future frames,
+      // so we are safe to step the simulation to the next frame.
       if (events.length > 0) {
         this.stepSimulation();
       }
     }
   }
 
-  private normalizeEvents(events: gameserver.GameMessage[]) {
-    for (let ev of events) {
-      if (isUIEvent(ev)) {
-        ev.frame = this.frame;
-      }
+  replayCurrentEvents(events: gameserver.GameMessage[]) {
+    while (events.length > 0 && events[0].frame <= this.frame) {
+      let event = events.shift()!;
+      this.handleEvent(event);
     }
   }
 
@@ -206,11 +202,18 @@ export class Game {
     console.log('handling event', { event, frame: this.frame })
     if (event.playerChange) {
       this.role = event.playerChange.player === this.player.id ? gameserver.Role.ROLE_PLAYER : gameserver.Role.ROLE_OBSERVER;
-    } else if (event.playerList) {
-      this.playerList.updatePlayerList(event.playerList.players as gameserver.Player[])
     } else if (event.gameEvent) {
       this.tetris!.processEvent(event.gameEvent as gameserver.GameEvent);
     }
+  }
+
+  replayUIEvents() {
+    for (let ev of this.uiEvents) {
+      if (ev.playerList) {
+        this.playerList.updatePlayerList(ev.playerList.players as gameserver.Player[])
+      }
+    }
+    this.uiEvents = []
   }
 }
 
