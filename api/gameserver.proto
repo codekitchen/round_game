@@ -21,10 +21,13 @@ message GameMessage {
     PlayerChange playerChange = 3;
     Heartbeat heartbeat = 4;
     PassControl passControl = 5;
-    PlayerList playerList = 6;
+    GamePing ping = 6;
 
     // game-specific events that the server doesn't parse
     GameEvent gameEvent = 100;
+
+    // UI events that don't directly affect the simulation state
+    PlayerList playerList = 200;
   }
 }
 
@@ -50,4 +53,7 @@ message PassControl {
 
 message PlayerList {
   repeated Player players = 1;
+}
+
+message GamePing {
 }

@@ -1,5 +1,5 @@
 import { isUIEvent } from "./events.js";
-import { Color, drawTextScreen, EngineObject, engineObjectsUpdate, frame, setFontDefault, vec2, Vector2 } from "./littlejs.esm.js";
+import { Color, drawTextScreen, EngineObject, manualEngineUpdate, setFontDefault, vec2 } from "./littlejs.esm.js";
 import { multiplayerObjecsUpdate } from "./multiplayer_object.js";
 import { PlayerList } from "./player_list.js";
 import { gameserver } from "./protocol/gameserver.js";
@@ -36,9 +36,16 @@ export class Game {
       this.reset(data.gameInit.seed!)
       this.player = data.gameInit.yourPlayer as gameserver.Player
       this.playerList.you = this.player
-      return
+    } else if (data.ping) {
+      // ignore pings, they're just to trigger
+      // manualEngineUpdate() calls
+    } else {
+      this.recording.push(data)
     }
-    this.recording.push(data)
+    // websocket event gives us an opportunity to do an update while
+    // the tab is in the background
+    if (document.hidden)
+      manualEngineUpdate()
   }
 
   ondisconnect = () => {

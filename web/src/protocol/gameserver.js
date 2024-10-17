@@ -268,8 +268,9 @@ export const gameserver = $root.gameserver = (() => {
          * @property {gameserver.IPlayerChange|null} [playerChange] GameMessage playerChange
          * @property {gameserver.IHeartbeat|null} [heartbeat] GameMessage heartbeat
          * @property {gameserver.IPassControl|null} [passControl] GameMessage passControl
-         * @property {gameserver.IPlayerList|null} [playerList] GameMessage playerList
+         * @property {gameserver.IGamePing|null} [ping] GameMessage ping
          * @property {gameserver.IGameEvent|null} [gameEvent] GameMessage gameEvent
+         * @property {gameserver.IPlayerList|null} [playerList] GameMessage playerList
          */
 
         /**
@@ -328,12 +329,12 @@ export const gameserver = $root.gameserver = (() => {
         GameMessage.prototype.passControl = null;
 
         /**
-         * GameMessage playerList.
-         * @member {gameserver.IPlayerList|null|undefined} playerList
+         * GameMessage ping.
+         * @member {gameserver.IGamePing|null|undefined} ping
          * @memberof gameserver.GameMessage
          * @instance
          */
-        GameMessage.prototype.playerList = null;
+        GameMessage.prototype.ping = null;
 
         /**
          * GameMessage gameEvent.
@@ -343,17 +344,25 @@ export const gameserver = $root.gameserver = (() => {
          */
         GameMessage.prototype.gameEvent = null;
 
+        /**
+         * GameMessage playerList.
+         * @member {gameserver.IPlayerList|null|undefined} playerList
+         * @memberof gameserver.GameMessage
+         * @instance
+         */
+        GameMessage.prototype.playerList = null;
+
         // OneOf field names bound to virtual getters and setters
         let $oneOfFields;
 
         /**
          * GameMessage msg.
-         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"playerList"|"gameEvent"|undefined} msg
+         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"gameEvent"|"playerList"|undefined} msg
          * @memberof gameserver.GameMessage
          * @instance
          */
         Object.defineProperty(GameMessage.prototype, "msg", {
-            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "playerList", "gameEvent"]),
+            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "ping", "gameEvent", "playerList"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -391,10 +400,12 @@ export const gameserver = $root.gameserver = (() => {
                 $root.gameserver.Heartbeat.encode(message.heartbeat, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
             if (message.passControl != null && Object.hasOwnProperty.call(message, "passControl"))
                 $root.gameserver.PassControl.encode(message.passControl, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
-            if (message.playerList != null && Object.hasOwnProperty.call(message, "playerList"))
-                $root.gameserver.PlayerList.encode(message.playerList, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
+            if (message.ping != null && Object.hasOwnProperty.call(message, "ping"))
+                $root.gameserver.GamePing.encode(message.ping, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
             if (message.gameEvent != null && Object.hasOwnProperty.call(message, "gameEvent"))
                 $root.gameserver.GameEvent.encode(message.gameEvent, writer.uint32(/* id 100, wireType 2 =*/802).fork()).ldelim();
+            if (message.playerList != null && Object.hasOwnProperty.call(message, "playerList"))
+                $root.gameserver.PlayerList.encode(message.playerList, writer.uint32(/* id 200, wireType 2 =*/1602).fork()).ldelim();
             return writer;
         };
 
@@ -450,11 +461,15 @@ export const gameserver = $root.gameserver = (() => {
                         break;
                     }
                 case 6: {
-                        message.playerList = $root.gameserver.PlayerList.decode(reader, reader.uint32());
+                        message.ping = $root.gameserver.GamePing.decode(reader, reader.uint32());
                         break;
                     }
                 case 100: {
                         message.gameEvent = $root.gameserver.GameEvent.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 200: {
+                        message.playerList = $root.gameserver.PlayerList.decode(reader, reader.uint32());
                         break;
                     }
                 default:
@@ -534,14 +549,14 @@ export const gameserver = $root.gameserver = (() => {
                         return "passControl." + error;
                 }
             }
-            if (message.playerList != null && message.hasOwnProperty("playerList")) {
+            if (message.ping != null && message.hasOwnProperty("ping")) {
                 if (properties.msg === 1)
                     return "msg: multiple values";
                 properties.msg = 1;
                 {
-                    let error = $root.gameserver.PlayerList.verify(message.playerList);
+                    let error = $root.gameserver.GamePing.verify(message.ping);
                     if (error)
-                        return "playerList." + error;
+                        return "ping." + error;
                 }
             }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
@@ -552,6 +567,16 @@ export const gameserver = $root.gameserver = (() => {
                     let error = $root.gameserver.GameEvent.verify(message.gameEvent);
                     if (error)
                         return "gameEvent." + error;
+                }
+            }
+            if (message.playerList != null && message.hasOwnProperty("playerList")) {
+                if (properties.msg === 1)
+                    return "msg: multiple values";
+                properties.msg = 1;
+                {
+                    let error = $root.gameserver.PlayerList.verify(message.playerList);
+                    if (error)
+                        return "playerList." + error;
                 }
             }
             return null;
@@ -591,15 +616,20 @@ export const gameserver = $root.gameserver = (() => {
                     throw TypeError(".gameserver.GameMessage.passControl: object expected");
                 message.passControl = $root.gameserver.PassControl.fromObject(object.passControl);
             }
-            if (object.playerList != null) {
-                if (typeof object.playerList !== "object")
-                    throw TypeError(".gameserver.GameMessage.playerList: object expected");
-                message.playerList = $root.gameserver.PlayerList.fromObject(object.playerList);
+            if (object.ping != null) {
+                if (typeof object.ping !== "object")
+                    throw TypeError(".gameserver.GameMessage.ping: object expected");
+                message.ping = $root.gameserver.GamePing.fromObject(object.ping);
             }
             if (object.gameEvent != null) {
                 if (typeof object.gameEvent !== "object")
                     throw TypeError(".gameserver.GameMessage.gameEvent: object expected");
                 message.gameEvent = $root.gameserver.GameEvent.fromObject(object.gameEvent);
+            }
+            if (object.playerList != null) {
+                if (typeof object.playerList !== "object")
+                    throw TypeError(".gameserver.GameMessage.playerList: object expected");
+                message.playerList = $root.gameserver.PlayerList.fromObject(object.playerList);
             }
             return message;
         };
@@ -641,15 +671,20 @@ export const gameserver = $root.gameserver = (() => {
                 if (options.oneofs)
                     object.msg = "passControl";
             }
-            if (message.playerList != null && message.hasOwnProperty("playerList")) {
-                object.playerList = $root.gameserver.PlayerList.toObject(message.playerList, options);
+            if (message.ping != null && message.hasOwnProperty("ping")) {
+                object.ping = $root.gameserver.GamePing.toObject(message.ping, options);
                 if (options.oneofs)
-                    object.msg = "playerList";
+                    object.msg = "ping";
             }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
                 object.gameEvent = $root.gameserver.GameEvent.toObject(message.gameEvent, options);
                 if (options.oneofs)
                     object.msg = "gameEvent";
+            }
+            if (message.playerList != null && message.hasOwnProperty("playerList")) {
+                object.playerList = $root.gameserver.PlayerList.toObject(message.playerList, options);
+                if (options.oneofs)
+                    object.msg = "playerList";
             }
             return object;
         };
@@ -1893,6 +1928,181 @@ export const gameserver = $root.gameserver = (() => {
         };
 
         return PlayerList;
+    })();
+
+    gameserver.GamePing = (function() {
+
+        /**
+         * Properties of a GamePing.
+         * @memberof gameserver
+         * @interface IGamePing
+         */
+
+        /**
+         * Constructs a new GamePing.
+         * @memberof gameserver
+         * @classdesc Represents a GamePing.
+         * @implements IGamePing
+         * @constructor
+         * @param {gameserver.IGamePing=} [properties] Properties to set
+         */
+        function GamePing(properties) {
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Creates a new GamePing instance using the specified properties.
+         * @function create
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {gameserver.IGamePing=} [properties] Properties to set
+         * @returns {gameserver.GamePing} GamePing instance
+         */
+        GamePing.create = function create(properties) {
+            return new GamePing(properties);
+        };
+
+        /**
+         * Encodes the specified GamePing message. Does not implicitly {@link gameserver.GamePing.verify|verify} messages.
+         * @function encode
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {gameserver.IGamePing} message GamePing message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        GamePing.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified GamePing message, length delimited. Does not implicitly {@link gameserver.GamePing.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {gameserver.IGamePing} message GamePing message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        GamePing.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a GamePing message from the specified reader or buffer.
+         * @function decode
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gameserver.GamePing} GamePing
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        GamePing.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.GamePing();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a GamePing message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gameserver.GamePing} GamePing
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        GamePing.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a GamePing message.
+         * @function verify
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        GamePing.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            return null;
+        };
+
+        /**
+         * Creates a GamePing message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gameserver.GamePing} GamePing
+         */
+        GamePing.fromObject = function fromObject(object) {
+            if (object instanceof $root.gameserver.GamePing)
+                return object;
+            return new $root.gameserver.GamePing();
+        };
+
+        /**
+         * Creates a plain object from a GamePing message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {gameserver.GamePing} message GamePing
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        GamePing.toObject = function toObject() {
+            return {};
+        };
+
+        /**
+         * Converts this GamePing to JSON.
+         * @function toJSON
+         * @memberof gameserver.GamePing
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        GamePing.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for GamePing
+         * @function getTypeUrl
+         * @memberof gameserver.GamePing
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        GamePing.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/gameserver.GamePing";
+        };
+
+        return GamePing;
     })();
 
     return gameserver;

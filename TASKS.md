@@ -4,7 +4,7 @@
 - [x] game over condition
 - [x] UI events shouldn't be tied to server frame
 - [ ] player needs to handle UI events like player list from server, currently ignoring until observer
-- [ ] game pauses in background tab
+- [x] keep game going when in a background tab
 - [x] fix littlejs usage to have separate gameupdate with our frame counter
 
 # Server

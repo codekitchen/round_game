@@ -89,7 +89,7 @@ func (c *Client) loop() {
 	defer cancel()
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 	go func() {
 		defer wg.Done()
 		c.readLoop(ctx)
@@ -97,6 +97,10 @@ func (c *Client) loop() {
 	go func() {
 		defer wg.Done()
 		c.writeLoop(ctx)
+	}()
+	go func() {
+		defer wg.Done()
+		c.pingLoop(ctx)
 	}()
 
 	<-c.stop
@@ -137,6 +141,31 @@ func (c *Client) writeLoop(ctx context.Context) {
 			}
 		case <-c.stopped:
 			return
+		}
+	}
+}
+
+// we send periodic "game pings" to the client so that it'll remain active
+// when in a browser background tab
+func (c *Client) pingLoop(ctx context.Context) {
+	for {
+		err := c.writeMessage(ctx, &protocol.GameMessage{
+			Msg: &protocol.GameMessage_Ping{
+				Ping: &protocol.GamePing{},
+			},
+		})
+		if err != nil {
+			select {
+			// write errors get sent to the receiving queue
+			case c.received <- ClientMessage{c, nil, err}:
+			case <-c.stopped:
+				return
+			}
+		}
+		select {
+		case <-c.stopped:
+			return
+		case <-time.After(50 * time.Millisecond):
 		}
 	}
 }

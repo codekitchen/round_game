@@ -1,5 +1,7 @@
 // LittleJS - MIT License - Copyright 2021 Frank Force
 // Modifications for round_game by Brian:
+// - modifications to engineUpdate and manualEngineUpdate to allow updating on websock message
+//   when the browser tab is sleeping in the background
 
 'use strict';
 
@@ -1484,6 +1486,8 @@ let medalDisplayIconSize = 50;
  *  @default
  *  @memberof Settings */
 let medalsPreventUnlock = false;
+
+let manualEngineUpdate = () => { };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Setters for global variables
@@ -5227,6 +5231,7 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
     // internal update loop for engine
     function engineUpdate(frameTimeMS=0)
     {
+        frameTimeMS = performance.now()
         // update time keeping
         let frameTimeDeltaMS = frameTimeMS - frameTimeLastMS;
         frameTimeLastMS = frameTimeMS;
@@ -5238,8 +5243,8 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
             frameTimeDeltaMS *= debugSpeedUp ? 5 : debugSpeedDown ? .2 : 1;
         timeReal += frameTimeDeltaMS / 1e3;
         frameTimeBufferMS += paused ? 0 : frameTimeDeltaMS;
-        if (!debugSpeedUp)
-            frameTimeBufferMS = min(frameTimeBufferMS, 50); // clamp in case of slow framerate
+        // if (!debugSpeedUp)
+        //     frameTimeBufferMS = min(frameTimeBufferMS, 50); // clamp in case of slow framerate
 
         updateCanvas();
 
@@ -5319,6 +5324,7 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
 
         requestAnimationFrame(engineUpdate);
     }
+    manualEngineUpdate = () => engineUpdate()
 
     function updateCanvas()
     {
@@ -5709,6 +5715,7 @@ export {
 	engineObjectsUpdate,
 	engineObjectsDestroy,
 	engineObjectsCallback,
+    manualEngineUpdate,
 
 	// Globals
 	debug,
@@ -5763,7 +5770,7 @@ export {
 	medalDisplayTime,
 	medalDisplaySlideTime,
 	medalDisplaySize,
-	medalDisplayIconSize,
+    medalDisplayIconSize,
 
 	// Setters for globals
 	setCameraPos,
@@ -5805,7 +5812,7 @@ export {
 	setMedalDisplayIconSize,
 	setMedalsPreventUnlock,
 	setShowWatermark,
-	setDebugKey,
+    setDebugKey,
 
 	// Utilities
 	PI,

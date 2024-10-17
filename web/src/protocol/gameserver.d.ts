@@ -130,11 +130,14 @@ export namespace gameserver {
         /** GameMessage passControl */
         passControl?: (gameserver.IPassControl|null);
 
-        /** GameMessage playerList */
-        playerList?: (gameserver.IPlayerList|null);
+        /** GameMessage ping */
+        ping?: (gameserver.IGamePing|null);
 
         /** GameMessage gameEvent */
         gameEvent?: (gameserver.IGameEvent|null);
+
+        /** GameMessage playerList */
+        playerList?: (gameserver.IPlayerList|null);
     }
 
     /** Represents a GameMessage. */
@@ -161,14 +164,17 @@ export namespace gameserver {
         /** GameMessage passControl. */
         public passControl?: (gameserver.IPassControl|null);
 
-        /** GameMessage playerList. */
-        public playerList?: (gameserver.IPlayerList|null);
+        /** GameMessage ping. */
+        public ping?: (gameserver.IGamePing|null);
 
         /** GameMessage gameEvent. */
         public gameEvent?: (gameserver.IGameEvent|null);
 
+        /** GameMessage playerList. */
+        public playerList?: (gameserver.IPlayerList|null);
+
         /** GameMessage msg. */
-        public msg?: ("gameInit"|"playerChange"|"heartbeat"|"passControl"|"playerList"|"gameEvent");
+        public msg?: ("gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"gameEvent"|"playerList");
 
         /**
          * Creates a new GameMessage instance using the specified properties.
@@ -818,6 +824,97 @@ export namespace gameserver {
 
         /**
          * Gets the default type url for PlayerList
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a GamePing. */
+    interface IGamePing {
+    }
+
+    /** Represents a GamePing. */
+    class GamePing implements IGamePing {
+
+        /**
+         * Constructs a new GamePing.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: gameserver.IGamePing);
+
+        /**
+         * Creates a new GamePing instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns GamePing instance
+         */
+        public static create(properties?: gameserver.IGamePing): gameserver.GamePing;
+
+        /**
+         * Encodes the specified GamePing message. Does not implicitly {@link gameserver.GamePing.verify|verify} messages.
+         * @param message GamePing message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: gameserver.IGamePing, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified GamePing message, length delimited. Does not implicitly {@link gameserver.GamePing.verify|verify} messages.
+         * @param message GamePing message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: gameserver.IGamePing, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a GamePing message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns GamePing
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gameserver.GamePing;
+
+        /**
+         * Decodes a GamePing message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns GamePing
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gameserver.GamePing;
+
+        /**
+         * Verifies a GamePing message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a GamePing message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns GamePing
+         */
+        public static fromObject(object: { [k: string]: any }): gameserver.GamePing;
+
+        /**
+         * Creates a plain object from a GamePing message. Also converts values to other types if specified.
+         * @param message GamePing
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: gameserver.GamePing, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this GamePing to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for GamePing
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */
