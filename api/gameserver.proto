@@ -22,6 +22,7 @@ message GameMessage {
     Heartbeat heartbeat = 4;
     PassControl passControl = 5;
     GamePing ping = 6;
+    Kicked kicked = 7;
 
     // game-specific events that the server doesn't parse
     GameEvent gameEvent = 100;
@@ -57,4 +58,12 @@ message PlayerList {
 }
 
 message GamePing {
+}
+
+enum KickReason {
+  KICK_REASON_IDLE = 0;
+}
+
+message Kicked {
+  KickReason reason = 1;
 }

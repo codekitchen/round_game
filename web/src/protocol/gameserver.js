@@ -269,6 +269,7 @@ export const gameserver = $root.gameserver = (() => {
          * @property {gameserver.IHeartbeat|null} [heartbeat] GameMessage heartbeat
          * @property {gameserver.IPassControl|null} [passControl] GameMessage passControl
          * @property {gameserver.IGamePing|null} [ping] GameMessage ping
+         * @property {gameserver.IKicked|null} [kicked] GameMessage kicked
          * @property {gameserver.IGameEvent|null} [gameEvent] GameMessage gameEvent
          * @property {gameserver.IPlayerList|null} [playerList] GameMessage playerList
          */
@@ -337,6 +338,14 @@ export const gameserver = $root.gameserver = (() => {
         GameMessage.prototype.ping = null;
 
         /**
+         * GameMessage kicked.
+         * @member {gameserver.IKicked|null|undefined} kicked
+         * @memberof gameserver.GameMessage
+         * @instance
+         */
+        GameMessage.prototype.kicked = null;
+
+        /**
          * GameMessage gameEvent.
          * @member {gameserver.IGameEvent|null|undefined} gameEvent
          * @memberof gameserver.GameMessage
@@ -357,12 +366,12 @@ export const gameserver = $root.gameserver = (() => {
 
         /**
          * GameMessage msg.
-         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"gameEvent"|"playerList"|undefined} msg
+         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"kicked"|"gameEvent"|"playerList"|undefined} msg
          * @memberof gameserver.GameMessage
          * @instance
          */
         Object.defineProperty(GameMessage.prototype, "msg", {
-            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "ping", "gameEvent", "playerList"]),
+            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "ping", "kicked", "gameEvent", "playerList"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -402,6 +411,8 @@ export const gameserver = $root.gameserver = (() => {
                 $root.gameserver.PassControl.encode(message.passControl, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
             if (message.ping != null && Object.hasOwnProperty.call(message, "ping"))
                 $root.gameserver.GamePing.encode(message.ping, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
+            if (message.kicked != null && Object.hasOwnProperty.call(message, "kicked"))
+                $root.gameserver.Kicked.encode(message.kicked, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
             if (message.gameEvent != null && Object.hasOwnProperty.call(message, "gameEvent"))
                 $root.gameserver.GameEvent.encode(message.gameEvent, writer.uint32(/* id 100, wireType 2 =*/802).fork()).ldelim();
             if (message.playerList != null && Object.hasOwnProperty.call(message, "playerList"))
@@ -462,6 +473,10 @@ export const gameserver = $root.gameserver = (() => {
                     }
                 case 6: {
                         message.ping = $root.gameserver.GamePing.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 7: {
+                        message.kicked = $root.gameserver.Kicked.decode(reader, reader.uint32());
                         break;
                     }
                 case 100: {
@@ -559,6 +574,16 @@ export const gameserver = $root.gameserver = (() => {
                         return "ping." + error;
                 }
             }
+            if (message.kicked != null && message.hasOwnProperty("kicked")) {
+                if (properties.msg === 1)
+                    return "msg: multiple values";
+                properties.msg = 1;
+                {
+                    let error = $root.gameserver.Kicked.verify(message.kicked);
+                    if (error)
+                        return "kicked." + error;
+                }
+            }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
                 if (properties.msg === 1)
                     return "msg: multiple values";
@@ -621,6 +646,11 @@ export const gameserver = $root.gameserver = (() => {
                     throw TypeError(".gameserver.GameMessage.ping: object expected");
                 message.ping = $root.gameserver.GamePing.fromObject(object.ping);
             }
+            if (object.kicked != null) {
+                if (typeof object.kicked !== "object")
+                    throw TypeError(".gameserver.GameMessage.kicked: object expected");
+                message.kicked = $root.gameserver.Kicked.fromObject(object.kicked);
+            }
             if (object.gameEvent != null) {
                 if (typeof object.gameEvent !== "object")
                     throw TypeError(".gameserver.GameMessage.gameEvent: object expected");
@@ -675,6 +705,11 @@ export const gameserver = $root.gameserver = (() => {
                 object.ping = $root.gameserver.GamePing.toObject(message.ping, options);
                 if (options.oneofs)
                     object.msg = "ping";
+            }
+            if (message.kicked != null && message.hasOwnProperty("kicked")) {
+                object.kicked = $root.gameserver.Kicked.toObject(message.kicked, options);
+                if (options.oneofs)
+                    object.msg = "kicked";
             }
             if (message.gameEvent != null && message.hasOwnProperty("gameEvent")) {
                 object.gameEvent = $root.gameserver.GameEvent.toObject(message.gameEvent, options);
@@ -2127,6 +2162,235 @@ export const gameserver = $root.gameserver = (() => {
         };
 
         return GamePing;
+    })();
+
+    /**
+     * KickReason enum.
+     * @name gameserver.KickReason
+     * @enum {number}
+     * @property {number} KICK_REASON_IDLE=0 KICK_REASON_IDLE value
+     */
+    gameserver.KickReason = (function() {
+        const valuesById = {}, values = Object.create(valuesById);
+        values[valuesById[0] = "KICK_REASON_IDLE"] = 0;
+        return values;
+    })();
+
+    gameserver.Kicked = (function() {
+
+        /**
+         * Properties of a Kicked.
+         * @memberof gameserver
+         * @interface IKicked
+         * @property {gameserver.KickReason|null} [reason] Kicked reason
+         */
+
+        /**
+         * Constructs a new Kicked.
+         * @memberof gameserver
+         * @classdesc Represents a Kicked.
+         * @implements IKicked
+         * @constructor
+         * @param {gameserver.IKicked=} [properties] Properties to set
+         */
+        function Kicked(properties) {
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Kicked reason.
+         * @member {gameserver.KickReason} reason
+         * @memberof gameserver.Kicked
+         * @instance
+         */
+        Kicked.prototype.reason = 0;
+
+        /**
+         * Creates a new Kicked instance using the specified properties.
+         * @function create
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {gameserver.IKicked=} [properties] Properties to set
+         * @returns {gameserver.Kicked} Kicked instance
+         */
+        Kicked.create = function create(properties) {
+            return new Kicked(properties);
+        };
+
+        /**
+         * Encodes the specified Kicked message. Does not implicitly {@link gameserver.Kicked.verify|verify} messages.
+         * @function encode
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {gameserver.IKicked} message Kicked message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Kicked.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.reason != null && Object.hasOwnProperty.call(message, "reason"))
+                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.reason);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Kicked message, length delimited. Does not implicitly {@link gameserver.Kicked.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {gameserver.IKicked} message Kicked message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Kicked.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a Kicked message from the specified reader or buffer.
+         * @function decode
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gameserver.Kicked} Kicked
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Kicked.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.Kicked();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1: {
+                        message.reason = reader.int32();
+                        break;
+                    }
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a Kicked message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gameserver.Kicked} Kicked
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Kicked.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a Kicked message.
+         * @function verify
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Kicked.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.reason != null && message.hasOwnProperty("reason"))
+                switch (message.reason) {
+                default:
+                    return "reason: enum value expected";
+                case 0:
+                    break;
+                }
+            return null;
+        };
+
+        /**
+         * Creates a Kicked message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gameserver.Kicked} Kicked
+         */
+        Kicked.fromObject = function fromObject(object) {
+            if (object instanceof $root.gameserver.Kicked)
+                return object;
+            let message = new $root.gameserver.Kicked();
+            switch (object.reason) {
+            default:
+                if (typeof object.reason === "number") {
+                    message.reason = object.reason;
+                    break;
+                }
+                break;
+            case "KICK_REASON_IDLE":
+            case 0:
+                message.reason = 0;
+                break;
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a Kicked message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {gameserver.Kicked} message Kicked
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Kicked.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            let object = {};
+            if (options.defaults)
+                object.reason = options.enums === String ? "KICK_REASON_IDLE" : 0;
+            if (message.reason != null && message.hasOwnProperty("reason"))
+                object.reason = options.enums === String ? $root.gameserver.KickReason[message.reason] === undefined ? message.reason : $root.gameserver.KickReason[message.reason] : message.reason;
+            return object;
+        };
+
+        /**
+         * Converts this Kicked to JSON.
+         * @function toJSON
+         * @memberof gameserver.Kicked
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Kicked.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for Kicked
+         * @function getTypeUrl
+         * @memberof gameserver.Kicked
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        Kicked.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/gameserver.Kicked";
+        };
+
+        return Kicked;
     })();
 
     return gameserver;

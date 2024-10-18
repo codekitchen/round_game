@@ -1,5 +1,5 @@
 import { isUIEvent } from "./events"
-import { Color, drawTextScreen, EngineObject, manualEngineUpdate, setFontDefault, vec2 } from "./littlejs.esm"
+import { Color, drawRect, drawText, drawTextScreen, EngineObject, manualEngineUpdate, setFontDefault, vec2 } from "./littlejs.esm"
 import { multiplayerObjecsUpdate } from "./multiplayer_object"
 import { PlayerList } from "./player_list"
 import { gameserver } from "./protocol/gameserver"
@@ -17,7 +17,7 @@ export class Game {
   frame = 0;
   lastEventFrame = 0;
   recording: gameserver.GameMessage[] = [];
-  gameState: 'waiting' | 'playing' | 'gameover' = 'waiting';
+  gameState: 'starting' | 'playing' | 'gameover' | 'ended' | 'kicked_idle' = 'starting';
   player = gameserver.Player.create({ id: '', name: '' });
   role = gameserver.Role.ROLE_OBSERVER;
   server = new ServerConnection
@@ -27,6 +27,7 @@ export class Game {
     this.server.ondisconnect = this.ondisconnect
     this.ui = new EngineObject()
     this.ui.addChild(this.playerList = new PlayerList(), vec2(-4.5, 10.5))
+    setFontDefault('Pixels')
   }
 
   onmessage = (ev: gameserver.GameMessage) => {
@@ -39,6 +40,9 @@ export class Game {
     } else if (ev.ping) {
       // ignore pings, they're just to trigger
       // manualEngineUpdate() calls
+    } else if (ev.kicked) {
+      // we are getting disconnected
+      this.gameState = 'kicked_idle'
     } else if (isUIEvent(ev)) {
       this.handleUIEvent(ev)
     } else {
@@ -52,6 +56,8 @@ export class Game {
 
   ondisconnect = () => {
     this.recording = []
+    if (this.gameState === 'playing')
+      this.gameState = 'ended'
   }
 
   gameOver = () => {
@@ -70,21 +76,27 @@ export class Game {
   }
 
   renderPost() {
-    setFontDefault('Pixels')
-    drawTextScreen(`frame: ${this.frame}`, vec2(200, 25), 20, new Color(1, 1, 1));
-    drawTextScreen(`state: ${this.gameState}`, vec2(200, 45), 20, new Color(1, 1, 1));
-    // drawTextScreen(`role: ${this.role}`, vec2(200, 105), 20, new Color(1, 1, 1));
-    let connState = '';
-    if (this.server.state === 'connecting') {
-      connState = 'Connecting...'
-    }  else if (this.server.state === 'disconnected') {
-      connState = 'Disconnected'
-    } else {
-      connState = 'Connected'
+    if (this.gameState !== 'playing') {
+      // fade the game screen
+      drawRect(vec2(0, 0), vec2(100), new Color(0, 0, 0, .45))
     }
-    drawTextScreen(connState, vec2(200, 65), 20, new Color(1, 1, 1));
-    if (this.gameState === 'gameover') {
-      drawTextScreen('Game Over!', vec2(200, 85), 20, new Color(1, 0.5, 0.5));
+
+    switch (this.gameState) {
+      case 'starting':
+        drawText('Connecting...', vec2(4.5, 17), 1.5, new Color(1, 1, 1));
+        break
+      case 'gameover':
+        drawRect(vec2(4.5, 17), vec2(13, 4), new Color(0, 0, 0, .7))
+        drawText('Game Over!', vec2(4.5, 17), 1.5, new Color(1, 0, 0));
+        break
+      case 'kicked_idle':
+        drawRect(vec2(4.5, 16), vec2(18, 4.5), new Color(0, 0, 0, .7))
+        drawText('Disconnected:\nIdle for too long', vec2(4.5, 17), 1.5, new Color(1, 0, 0));
+        break
+      case 'ended':
+        drawRect(vec2(4.5, 17), vec2(18, 4), new Color(0, 0, 0, .7))
+        drawText('Connection Lost', vec2(4.5, 17), 1.5, new Color(1, 0, 0));
+        break
     }
 
     if (this.gameState === 'playing') {

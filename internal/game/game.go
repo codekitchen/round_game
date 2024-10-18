@@ -83,7 +83,7 @@ loop:
 			endGame = nil
 		case fc := <-g.fromClients:
 			if fc.Err != nil {
-				g.dropClient(fc.C)
+				g.dropClient(fc.C, nil)
 				break
 			}
 			g.gotClientMessage(fc.C, fc.Msg)
@@ -110,14 +110,14 @@ func (g *Game) shutdown() {
 	g.logger.Debug("shutting down game")
 	g.player = nil
 	for n := g.clients.Front(); n != nil; n = g.clients.Front() {
-		n.Value.Stop()
+		n.Value.Stop(nil)
 		g.clients.Remove(n)
 	}
 }
 
-func (g *Game) dropClient(c *client.Client) {
+func (g *Game) dropClient(c *client.Client, kickMessage *protocol.GameMessage) {
 	g.logger.Debug("error from client, dropping", "client", c)
-	c.Stop()
+	c.Stop(kickMessage)
 	g.logger.Debug("client dropped", "client", c)
 	g.clientDisconnected(c)
 }
@@ -234,8 +234,14 @@ func (g *Game) updatePlayerIdleCount(c *client.Client) {
 
 func (g *Game) dropPlayerIfIdle(c *client.Client) {
 	if g.idleTurnCounts[c.ID] >= AllowedIdleTurns {
-		g.logger.Debug("player was idle for too long, dropping client", "client", g.player.Value)
-		g.dropClient(c)
+		kickMessage := &protocol.GameMessage{
+			Msg: &protocol.GameMessage_Kicked{
+				Kicked: &protocol.Kicked{
+					Reason: protocol.KickReason_KICK_REASON_IDLE,
+				},
+			},
+		}
+		g.dropClient(c, kickMessage)
 	}
 }
 

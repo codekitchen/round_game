@@ -40,7 +40,7 @@ type Client struct {
 
 	received chan<- ClientMessage
 	sending  chan *protocol.GameMessage
-	stop     chan error
+	stop     chan *protocol.GameMessage
 	stopped  chan struct{}
 }
 
@@ -57,7 +57,7 @@ func New(ws *websocket.Conn, logger *slog.Logger) *Client {
 		logger: logger.With("client", id),
 
 		sending: make(chan *protocol.GameMessage),
-		stop:    make(chan error),
+		stop:    make(chan *protocol.GameMessage),
 		stopped: make(chan struct{}),
 	}
 	totalPlayers.Add(1)
@@ -80,9 +80,9 @@ func (c *Client) String() string {
 	return c.ID
 }
 
-func (c *Client) Stop() error {
-	c.stop <- nil
-	return <-c.stop
+func (c *Client) Stop(finalMessage *protocol.GameMessage) {
+	c.stop <- finalMessage
+	<-c.stop
 }
 
 func (c *Client) loop() {
@@ -105,7 +105,11 @@ func (c *Client) loop() {
 		c.pingLoop(ctx)
 	}()
 
-	<-c.stop
+	finalMessage := <-c.stop
+	if finalMessage != nil {
+		// ignore error on final send, nothing more we can do
+		c.writeMessage(ctx, finalMessage)
+	}
 	close(c.stopped)
 	cancel()
 	wg.Wait()
