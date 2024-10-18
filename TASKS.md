@@ -6,7 +6,7 @@
 - [x] player needs to handle UI events like player list from server, currently ignoring until observer
 - [x] keep game going when in a background tab
 - [x] fix littlejs usage to have separate gameupdate with our frame counter
-- [ ] keep and display score
+- [x] keep and display score
 
 # Server
 - [x] serve static assets

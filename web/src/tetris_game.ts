@@ -93,8 +93,18 @@ export class NextPieceDisplay extends EngineObject {
   }
 
   render() {
-    drawRect(this.pos, vec2(6, 4), new Color(0, 0, 0, .5))
-    drawText("Next Piece", this.pos.add(vec2(0, 2.5)), 1, new Color(1, 1, 1))
+    drawRect(this.pos.add(vec2(0,0.5)), vec2(8, 5), new Color(0, 0, 0, .5))
+    drawText("Next Piece", this.pos.add(vec2(0, 2)), 1, new Color(1, 1, 1))
+  }
+}
+
+export class ScoreDisplay extends EngineObject {
+  score = 0
+  render() {
+    drawRect(this.pos.add(vec2(0,.5)), vec2(8, 3), new Color(0, 0, 0, .5))
+    let displayScore = this.score.toString().padStart(8, '0')
+    drawText(displayScore, this.pos, 1, new Color(1, 1, 1));
+    drawText("Score", this.pos.add(vec2(0, 1)), 1, new Color(1, 1, 1));
   }
 }
 
@@ -105,6 +115,7 @@ export class TetrisGame extends MultiplayerObject {
 
   piece!: Piece;
   nextPieceDisplay = new NextPieceDisplay;
+  scoreDisplay = new ScoreDisplay;
   rand!: RandomGenerator;
   dropFast = false;
   passControl = false;
@@ -118,7 +129,8 @@ export class TetrisGame extends MultiplayerObject {
     this.dropFast = false;
     this.chooseNextPiece();
     this.newPiece();
-    this.addChild(this.nextPieceDisplay, vec2(14.5, 14.5));
+    this.addChild(this.nextPieceDisplay, vec2(14.5, 12.5));
+    this.addChild(this.scoreDisplay, vec2(14.5, 17.5));
     tetrisGame = this; // implicit singleton
   }
   lockstepUpdate(): void {
@@ -171,8 +183,10 @@ export class TetrisGame extends MultiplayerObject {
     this.passControl = true;
   }
   checkForScoring() {
+    let rowsCleared = 0;
     for (let y = 0; y < TetrisGame.HEIGHT; y++) {
       while (this.rowFilled(y)) {
+        rowsCleared++;
         // scored. remove the current row and shift everything above it down
         // this feels overly complex, because each grid position is pointing to
         // a game object. I could probably avoid that.
@@ -193,6 +207,14 @@ export class TetrisGame extends MultiplayerObject {
         }
       }
     }
+    let scoreAdd = 0;
+    switch (rowsCleared) {
+      case 1: scoreAdd = 100; break;
+      case 2: scoreAdd = 300; break;
+      case 3: scoreAdd = 500; break;
+      case 4: scoreAdd = 800; break;
+    }
+    this.scoreDisplay.score += scoreAdd;
   }
   rowFilled(y: number) {
     for (let x = 0; x < TetrisGame.WIDTH; x++) {

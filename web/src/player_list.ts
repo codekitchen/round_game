@@ -13,10 +13,10 @@ class Avatar extends EngineObject {
   }
   render(): void {
     if (this.you) {
-      drawRect(this.pos, vec2(3.5, 1), new Color(0, 1, 0, .3))
+      drawRect(this.pos, vec2(5, 1), new Color(0, 1, 0, .3))
     }
     if (this.currentPlayer) {
-      drawText(this.name+'🕹️', this.pos, 0.9, new Color(1, 1, 1))
+      drawText(this.name+' 🕹️', this.pos, 0.9, new Color(1, 1, 1))
     } else {
       drawText(this.name, this.pos, 0.9, new Color(1, 1, 1))
     }
@@ -35,7 +35,7 @@ export class PlayerList extends EngineObject {
       c.destroy()
     }
     this.avatars = []
-    let i = 0
+    let i = -2
     this.list.players.forEach(p => {
       let a = new Avatar(p.name!)
       if (p.id === this.you)
@@ -48,7 +48,7 @@ export class PlayerList extends EngineObject {
   }
 
   render(): void {
-    drawRect(this.pos.add(vec2(0, -5)), vec2(3, 12), new Color(0, 0, 0, .5))
-    drawText('Players', this.pos.add(vec2(0, 1.5)), 1, new Color(1, 1, 1))
+    drawRect(this.pos.add(vec2(0, -5)), vec2(6, 12), new Color(0, 0, 0, .5))
+    drawText('Players', this.pos.add(vec2(0, 0)), 1, new Color(1, 1, 1))
   }
 }

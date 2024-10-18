@@ -26,7 +26,7 @@ export class Game {
     this.server.onmessage = this.onmessage
     this.server.ondisconnect = this.ondisconnect
     this.ui = new EngineObject()
-    this.ui.addChild(this.playerList = new PlayerList(), vec2(-4, 10.5))
+    this.ui.addChild(this.playerList = new PlayerList(), vec2(-4.5, 10.5))
   }
 
   onmessage = (ev: gameserver.GameMessage) => {
