@@ -62,8 +62,8 @@ class Piece extends MultiplayerObject {
     // during rotation is we're blocked on one side.
     const newPositions = this.children.map(c => {
       let oldPos = c.localPos;
-      let y = -oldPos.x;
-      let x = oldPos.y;
+      let y = oldPos.x;
+      let x = -oldPos.y;
       return [c, vec2(x, y)];
     })
     if (!newPositions.every(([_, p]) => tetrisGame.validMinoLocation(this.localPos.add(p)))) {
