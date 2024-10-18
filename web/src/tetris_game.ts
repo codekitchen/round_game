@@ -1,4 +1,4 @@
-import { EngineObject, vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown, cameraPos, drawRect, Color } from "./littlejs.esm"
+import { vec2, keyWasReleased, keyWasPressed, RandomGenerator, Vector2, keyIsDown, cameraPos, drawRect, Color, EngineObject, drawText } from "./littlejs.esm"
 import { gameserver } from "./protocol/gameserver"
 import { SHAPES, NUM_SHAPES } from "./shapes"
 import { MultiplayerObject } from "./multiplayer_object"
@@ -24,14 +24,14 @@ class Piece extends MultiplayerObject {
   static FAST_DROP_DELAY = 3;
   dropDelay = 14;
   dropCounter = 0;
-  constructor(type: number) {
+  constructor(public type: number) {
     super(vec2(0), vec2(0));
     for (let v of SHAPES[type].tiles) {
       this.addChild(new Mino(type), v);
     }
   }
   lockstepUpdate() {
-    // this.dropCounter++;
+    this.dropCounter++;
     const dropNow = (tetrisGame.dropFast && this.dropCounter > Piece.FAST_DROP_DELAY) || (this.dropCounter > this.dropDelay);
     if (dropNow) {
       this.dropCounter = 0;
@@ -77,12 +77,34 @@ class Piece extends MultiplayerObject {
   render() { }
 }
 
+export class NextPieceDisplay extends EngineObject {
+  pieceType: number = 0
+  piece?: Piece
+
+  updatePiece(pieceType: number) {
+    this.piece?.destroy()
+    this.pieceType = pieceType
+    this.piece = new Piece(pieceType)
+    let offset = vec2(0, -.5)
+    if (this.pieceType === 0 || this.pieceType === 3) {
+      offset = vec2(-.5, -.5)
+    }
+    this.addChild(this.piece, offset)
+  }
+
+  render() {
+    drawRect(this.pos, vec2(6, 4), new Color(0, 0, 0, .5))
+    drawText("Next Piece", this.pos.add(vec2(0, 2.5)), 1, new Color(1, 1, 1))
+  }
+}
+
 export class TetrisGame extends MultiplayerObject {
   static WIDTH = 10
   static HEIGHT = 20
   grid: (Mino|undefined)[] = Array(TetrisGame.WIDTH * TetrisGame.HEIGHT)
 
   piece!: Piece;
+  nextPieceDisplay = new NextPieceDisplay;
   rand!: RandomGenerator;
   dropFast = false;
   passControl = false;
@@ -94,16 +116,22 @@ export class TetrisGame extends MultiplayerObject {
     super(vec2(0), TetrisGame.GameSize);
     this.rand = new RandomGenerator(seed);
     this.dropFast = false;
+    this.chooseNextPiece();
     this.newPiece();
+    this.addChild(this.nextPieceDisplay, vec2(14.5, 14.5));
     tetrisGame = this; // implicit singleton
   }
   lockstepUpdate(): void {
     this.passControl = false;
   }
+  chooseNextPiece() {
+    this.nextPieceDisplay.updatePiece(this.rand.int(NUM_SHAPES));
+  }
   newPiece() {
-    const type = this.rand.int(NUM_SHAPES);
+    const type = this.nextPieceDisplay.pieceType;
     this.piece = new Piece(type);
     this.addChild(this.piece, vec2(4, 19));
+    this.chooseNextPiece();
   }
   render() {
     // draw the background

@@ -7,7 +7,7 @@ export class MultiplayerObject extends EngineObject {
 
 export function multiplayerObjecsUpdate() {
   function updateObject(o: MultiplayerObject) {
-    if (!o.destroyed) {
+    if (o instanceof MultiplayerObject && !o.destroyed) {
       o.lockstepUpdate();
       for (const child of o.children)
         updateObject(child);
@@ -15,7 +15,7 @@ export function multiplayerObjecsUpdate() {
   }
   for (const o of engineObjects) {
     // update top level objects
-    if (o instanceof MultiplayerObject && !o.parent) {
+    if (!o.parent) {
       updateObject(o);
       o.updateTransforms();
     }
