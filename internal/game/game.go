@@ -17,6 +17,8 @@ var (
 	ErrGameStopped = errors.New("game stopped")
 )
 
+const EndGameDelay = 0
+
 type GameID = string
 
 type Game struct {
@@ -66,7 +68,7 @@ loop:
 	for {
 		if g.player == nil && endGame == nil {
 			// no players, start timer to end game
-			endGame = time.After(time.Second * 10)
+			endGame = time.After(EndGameDelay)
 		}
 
 		select {
@@ -108,7 +110,9 @@ func (g *Game) shutdown() {
 }
 
 func (g *Game) dropClient(c *client.Client) {
+	g.logger.Debug("error from client, dropping", "client", c)
 	c.Stop()
+	g.logger.Debug("client dropped", "client", c)
 	g.clientDisconnected(c)
 }
 
@@ -144,22 +148,21 @@ func (g *Game) addClient(c *client.Client) {
 		c.SendMessage(msg)
 	}
 
-	g.sendPlayerList()
-
 	// need to start as observer, replay all existing messages, and then switch to
 	// player
 	if g.player == nil {
 		g.logger.Debug("promoting new client to player", "client", c)
 		g.player = node
-		g.changePlayer(g.player.Value, g.mostRecentFrame+1)
+		g.notifyNewPlayer(g.mostRecentFrame + 1)
 	}
+	g.sendPlayerList()
 }
 
 func (g *Game) clientDisconnected(c *client.Client) {
-	if g.player != nil && c == g.player.Value {
+	node := g.clients.Find(func(v *client.Client) bool { return c == v })
+	if g.player == node {
 		g.chooseNextPlayer(g.mostRecentFrame+1, false)
 	}
-	node := g.clients.Find(func(v *client.Client) bool { return c == v })
 	g.clients.Remove(node)
 	g.sendPlayerList()
 }
@@ -174,7 +177,7 @@ func (g *Game) chooseNextPlayer(frame int32, allowSame bool) {
 		return
 	}
 	g.logger.Debug("new player selected", "player", g.player.Value)
-	g.changePlayer(g.player.Value, frame)
+	g.notifyNewPlayer(frame)
 }
 
 func (g *Game) addEvent(msg *protocol.GameMessage) {
@@ -210,10 +213,11 @@ func (g *Game) handlePassControlMessage(source *client.Client, msg *protocol.Gam
 	}
 	// next player controls the next frame, not the current frame
 	g.chooseNextPlayer(msg.Frame+1, true)
+	g.sendPlayerList()
 }
 
-func (g *Game) changePlayer(c *client.Client, frame int32) {
-	c.SendMessage(&protocol.GameMessage{
+func (g *Game) notifyNewPlayer(frame int32) {
+	g.player.Value.SendMessage(&protocol.GameMessage{
 		Frame: frame,
 		Msg: &protocol.GameMessage_PlayerChange{
 			PlayerChange: &protocol.PlayerChange{
@@ -225,6 +229,9 @@ func (g *Game) changePlayer(c *client.Client, frame int32) {
 
 func (g *Game) sendPlayerList() {
 	list := &protocol.PlayerList{}
+	if g.player != nil {
+		list.CurrentPlayerID = g.player.Value.ID
+	}
 	for c := range g.clients.All() {
 		list.Players = append(list.Players, &protocol.Player{
 			Id:   c.ID,

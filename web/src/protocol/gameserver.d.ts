@@ -738,6 +738,9 @@ export namespace gameserver {
 
         /** PlayerList players */
         players?: (gameserver.IPlayer[]|null);
+
+        /** PlayerList currentPlayerID */
+        currentPlayerID?: (string|null);
     }
 
     /** Represents a PlayerList. */
@@ -751,6 +754,9 @@ export namespace gameserver {
 
         /** PlayerList players. */
         public players: gameserver.IPlayer[];
+
+        /** PlayerList currentPlayerID. */
+        public currentPlayerID: string;
 
         /**
          * Creates a new PlayerList instance using the specified properties.

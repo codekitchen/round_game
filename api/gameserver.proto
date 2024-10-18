@@ -53,6 +53,7 @@ message PassControl {
 
 message PlayerList {
   repeated Player players = 1;
+  string currentPlayerID = 2;
 }
 
 message GamePing {

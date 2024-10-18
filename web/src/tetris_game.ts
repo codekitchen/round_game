@@ -31,7 +31,7 @@ class Piece extends MultiplayerObject {
     }
   }
   lockstepUpdate() {
-    this.dropCounter++;
+    // this.dropCounter++;
     const dropNow = (tetrisGame.dropFast && this.dropCounter > Piece.FAST_DROP_DELAY) || (this.dropCounter > this.dropDelay);
     if (dropNow) {
       this.dropCounter = 0;
@@ -107,8 +107,8 @@ export class TetrisGame extends MultiplayerObject {
   }
   render() {
     // draw the background
-    drawRect(cameraPos, vec2(100), new Color(.5, .5, .5));
-    drawRect(cameraPos.add(vec2(-.5)), this.size, new Color(.1, .1, .1));
+    drawRect(cameraPos, vec2(100), new Color(0, 0, .4));
+    drawRect(cameraPos.add(vec2(-.5)), this.size, new Color(0,0,0, .5));
   }
   addMino(c: Mino, pos: Vector2) {
     this.addChild(c, pos);

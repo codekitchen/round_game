@@ -1713,6 +1713,7 @@ export const gameserver = $root.gameserver = (() => {
          * @memberof gameserver
          * @interface IPlayerList
          * @property {Array.<gameserver.IPlayer>|null} [players] PlayerList players
+         * @property {string|null} [currentPlayerID] PlayerList currentPlayerID
          */
 
         /**
@@ -1738,6 +1739,14 @@ export const gameserver = $root.gameserver = (() => {
          * @instance
          */
         PlayerList.prototype.players = $util.emptyArray;
+
+        /**
+         * PlayerList currentPlayerID.
+         * @member {string} currentPlayerID
+         * @memberof gameserver.PlayerList
+         * @instance
+         */
+        PlayerList.prototype.currentPlayerID = "";
 
         /**
          * Creates a new PlayerList instance using the specified properties.
@@ -1766,6 +1775,8 @@ export const gameserver = $root.gameserver = (() => {
             if (message.players != null && message.players.length)
                 for (let i = 0; i < message.players.length; ++i)
                     $root.gameserver.Player.encode(message.players[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.currentPlayerID != null && Object.hasOwnProperty.call(message, "currentPlayerID"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.currentPlayerID);
             return writer;
         };
 
@@ -1804,6 +1815,10 @@ export const gameserver = $root.gameserver = (() => {
                         if (!(message.players && message.players.length))
                             message.players = [];
                         message.players.push($root.gameserver.Player.decode(reader, reader.uint32()));
+                        break;
+                    }
+                case 2: {
+                        message.currentPlayerID = reader.string();
                         break;
                     }
                 default:
@@ -1850,6 +1865,9 @@ export const gameserver = $root.gameserver = (() => {
                         return "players." + error;
                 }
             }
+            if (message.currentPlayerID != null && message.hasOwnProperty("currentPlayerID"))
+                if (!$util.isString(message.currentPlayerID))
+                    return "currentPlayerID: string expected";
             return null;
         };
 
@@ -1875,6 +1893,8 @@ export const gameserver = $root.gameserver = (() => {
                     message.players[i] = $root.gameserver.Player.fromObject(object.players[i]);
                 }
             }
+            if (object.currentPlayerID != null)
+                message.currentPlayerID = String(object.currentPlayerID);
             return message;
         };
 
@@ -1893,11 +1913,15 @@ export const gameserver = $root.gameserver = (() => {
             let object = {};
             if (options.arrays || options.defaults)
                 object.players = [];
+            if (options.defaults)
+                object.currentPlayerID = "";
             if (message.players && message.players.length) {
                 object.players = [];
                 for (let j = 0; j < message.players.length; ++j)
                     object.players[j] = $root.gameserver.Player.toObject(message.players[j], options);
             }
+            if (message.currentPlayerID != null && message.hasOwnProperty("currentPlayerID"))
+                object.currentPlayerID = message.currentPlayerID;
             return object;
         };
 

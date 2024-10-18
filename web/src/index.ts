@@ -1,5 +1,5 @@
 import { game } from "./game.js";
-import { engineInit, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, vec2 } from "./littlejs.esm.js";
+import { engineInit, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, setShowWatermark, vec2 } from "./littlejs.esm.js";
 import { TetrisGame } from "./tetris_game.js";
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -11,6 +11,7 @@ function gameInit() {
   setCameraPos(levelSize.scale(.5));
   // turn off collisions to avoid accidentally using them
   setEnablePhysicsSolver(false);
+  setShowWatermark(false);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

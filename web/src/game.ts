@@ -17,7 +17,6 @@ export class Game {
   frame = 0;
   lastEventFrame = 0;
   recording: gameserver.GameMessage[] = [];
-  uiEvents: gameserver.GameMessage[] = [];
   gameState: 'waiting' | 'playing' | 'gameover' = 'waiting';
   player = gameserver.Player.create({ id: '', name: '' });
   role = gameserver.Role.ROLE_OBSERVER;
@@ -27,7 +26,7 @@ export class Game {
     this.server.onmessage = this.onmessage
     this.server.ondisconnect = this.ondisconnect
     this.ui = new EngineObject()
-    this.ui.addChild(this.playerList = new PlayerList(), vec2(-8, 10))
+    this.ui.addChild(this.playerList = new PlayerList(), vec2(-4, 10.5))
   }
 
   onmessage = (ev: gameserver.GameMessage) => {
@@ -36,12 +35,12 @@ export class Game {
     if (ev.gameInit) {
       this.reset(ev.gameInit.seed!)
       this.player = ev.gameInit.yourPlayer as gameserver.Player
-      this.playerList.you = this.player
+      this.playerList.you = this.player.id
     } else if (ev.ping) {
       // ignore pings, they're just to trigger
       // manualEngineUpdate() calls
     } else if (isUIEvent(ev)) {
-      this.uiEvents.push(ev)
+      this.handleUIEvent(ev)
     } else {
       this.recording.push(ev)
     }
@@ -67,7 +66,6 @@ export class Game {
     this.gameState = 'playing';
     this.frame = this.lastEventFrame = 0;
     this.role = gameserver.Role.ROLE_OBSERVER;
-    this.uiEvents = [];
     this.recording = [];
   }
 
@@ -131,7 +129,6 @@ export class Game {
       this.sendEvent(ev);
     }
     this.replayCurrentEvents(events);
-    this.replayUIEvents();
     this.stepSimulation();
   }
 
@@ -177,7 +174,6 @@ export class Game {
 
       // now we are caught up, replay in real time
       this.replayCurrentEvents(events);
-      this.replayUIEvents();
 
       // if there's still events on the queue, they are in future frames,
       // so we are safe to step the simulation to the next frame.
@@ -199,7 +195,7 @@ export class Game {
       console.error('got event for previous frame', { event, frame: this.frame })
       return
     }
-    console.log('handling event', { event, frame: this.frame })
+    // console.log('handling event', { event, frame: this.frame })
     if (event.playerChange) {
       this.role = event.playerChange.player === this.player.id ? gameserver.Role.ROLE_PLAYER : gameserver.Role.ROLE_OBSERVER;
     } else if (event.gameEvent) {
@@ -207,13 +203,10 @@ export class Game {
     }
   }
 
-  replayUIEvents() {
-    for (let ev of this.uiEvents) {
-      if (ev.playerList) {
-        this.playerList.updatePlayerList(ev.playerList.players as gameserver.Player[])
-      }
+  handleUIEvent(ev: gameserver.GameMessage) {
+    if (ev.playerList) {
+      this.playerList.updatePlayerList(ev.playerList as gameserver.PlayerList)
     }
-    this.uiEvents = []
   }
 }
 

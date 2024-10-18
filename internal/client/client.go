@@ -42,7 +42,7 @@ type Client struct {
 	stopped  chan struct{}
 }
 
-var playerNames = []string{"🐙", "🦊", "🦄", "🐼", "🦉", "🐳", "😺", "🍁", "🍀", "🌵", "🌲", "🌸", "🐹", "🪩", "👾", "🎃"}
+var playerNames = []string{"🐙", "🦊", "🦄", "🐼", "🦉", "🐳", "😺", "🍁", "🍀", "🌵", "🌲", "🌸", "🐹", "👾", "🎃"}
 
 var nextClientID atomic.Uint32
 
@@ -136,8 +136,8 @@ func (c *Client) writeLoop(ctx context.Context) {
 				// write errors get sent to the receiving queue
 				case c.received <- ClientMessage{c, nil, err}:
 				case <-c.stopped:
-					return
 				}
+				return
 			}
 		case <-c.stopped:
 			return
@@ -159,8 +159,8 @@ func (c *Client) pingLoop(ctx context.Context) {
 			// write errors get sent to the receiving queue
 			case c.received <- ClientMessage{c, nil, err}:
 			case <-c.stopped:
-				return
 			}
+			return
 		}
 		select {
 		case <-c.stopped:
