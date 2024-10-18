@@ -1,6 +1,6 @@
-import { game } from "./game.js";
-import { engineInit, glInitPostProcess, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, setShowWatermark, vec2 } from "./littlejs.esm.js";
-import { TetrisGame } from "./tetris_game.js";
+import { game } from "./game"
+import { engineInit, glInitPostProcess, setCameraPos, setCanvasFixedSize, setEnablePhysicsSolver, setShowWatermark, vec2 } from "./littlejs.esm"
+import { TetrisGame } from "./tetris_game"
 
 ///////////////////////////////////////////////////////////////////////////////
 function gameInit() {
@@ -32,9 +32,6 @@ function gameUpdatePost() {
 function gameRender() {
   // called before objects are rendered
   // draw any background effects that appear behind objects
-  // drawRect(cameraPos, vec2(100), new Color(.5, .5, .5));
-  // -.5 because the block locations are in the center of the block
-  // drawRect(cameraPos.add(vec2(-.5)), game.tetris.size, new Color(.1, .1, .1));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

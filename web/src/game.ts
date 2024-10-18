@@ -1,10 +1,10 @@
-import { isUIEvent } from "./events.js";
-import { Color, drawTextScreen, EngineObject, manualEngineUpdate, setFontDefault, vec2 } from "./littlejs.esm.js";
-import { multiplayerObjecsUpdate } from "./multiplayer_object.js";
-import { PlayerList } from "./player_list.js";
-import { gameserver } from "./protocol/gameserver.js";
-import { ServerConnection } from "./server.js";
-import { TetrisGame } from "./tetris_game.js"
+import { isUIEvent } from "./events"
+import { Color, drawTextScreen, EngineObject, manualEngineUpdate, setFontDefault, vec2 } from "./littlejs.esm"
+import { multiplayerObjecsUpdate } from "./multiplayer_object"
+import { PlayerList } from "./player_list"
+import { gameserver } from "./protocol/gameserver"
+import { ServerConnection } from "./server"
+import { TetrisGame } from "./tetris_game"
 
 const HEARTBEAT_INTERVAL = 20; // max frames between an event
 const OBSERVER_DELAY = 15; // # of frames
