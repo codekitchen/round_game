@@ -30,8 +30,10 @@ type ClientMessage struct {
 	Err error
 }
 
+type ClientID = string
+
 type Client struct {
-	ID     string
+	ID     ClientID
 	Name   string
 	ws     *websocket.Conn
 	logger *slog.Logger

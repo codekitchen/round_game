@@ -18,6 +18,7 @@ var (
 )
 
 const EndGameDelay = 0
+const AllowedIdleTurns = 2
 
 type GameID = string
 
@@ -33,6 +34,9 @@ type Game struct {
 	stop        chan struct{}
 	fromClients chan client.ClientMessage
 	newClients  chan *client.Client
+
+	idleTurnCounts     map[client.ClientID]int
+	keyPressedThisTurn bool
 }
 
 var nextGameID atomic.Uint32
@@ -56,6 +60,8 @@ func newGame() *Game {
 		stop:        make(chan struct{}),
 		fromClients: make(chan client.ClientMessage),
 		newClients:  make(chan *client.Client),
+
+		idleTurnCounts: make(map[client.ClientID]int),
 	}
 }
 
@@ -184,6 +190,7 @@ func (g *Game) addEvent(msg *protocol.GameMessage) {
 	if msg.GetGameEvent() != nil {
 		// don't add things like heartbeats to the replay log
 		g.events = append(g.events, msg)
+		g.keyPressedThisTurn = true
 	}
 }
 
@@ -211,12 +218,31 @@ func (g *Game) handlePassControlMessage(source *client.Client, msg *protocol.Gam
 		g.logger.Info("ignoring pass control message from non-player", "msg", msg, "source", source)
 		return
 	}
+	previousPlayer := g.player.Value
+	g.updatePlayerIdleCount(previousPlayer)
 	// next player controls the next frame, not the current frame
 	g.chooseNextPlayer(msg.Frame+1, true)
+	g.dropPlayerIfIdle(previousPlayer)
 	g.sendPlayerList()
 }
 
+func (g *Game) updatePlayerIdleCount(c *client.Client) {
+	if g.keyPressedThisTurn {
+		g.idleTurnCounts[c.ID] = 0
+	} else {
+		g.idleTurnCounts[c.ID]++
+	}
+}
+
+func (g *Game) dropPlayerIfIdle(c *client.Client) {
+	if g.idleTurnCounts[c.ID] >= AllowedIdleTurns {
+		g.logger.Debug("player was idle for too long, dropping client", "client", g.player.Value)
+		g.dropClient(c)
+	}
+}
+
 func (g *Game) notifyNewPlayer(frame int32) {
+	g.keyPressedThisTurn = false
 	g.player.Value.SendMessage(&protocol.GameMessage{
 		Frame: frame,
 		Msg: &protocol.GameMessage_PlayerChange{

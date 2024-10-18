@@ -3,7 +3,7 @@
 - [x] record and replay an entire game
 - [x] game over condition
 - [x] UI events shouldn't be tied to server frame
-- [ ] player needs to handle UI events like player list from server, currently ignoring until observer
+- [x] player needs to handle UI events like player list from server, currently ignoring until observer
 - [x] keep game going when in a background tab
 - [x] fix littlejs usage to have separate gameupdate with our frame counter
 
@@ -20,7 +20,7 @@
 - [x] timeouts for client reading/writing
 - [x] end game if no clients are connected for N seconds
 - [x] keep retrying when electing new player fails
-- [ ] timeout player quickly (2s?) if unresponsive, to keep the game moving
+- [x] timeout player to keep the game moving if idle X turns
 - [x] track some basic stats
 - [ ] preserve stats across restarts somewhere persistent
 - [x] fix replay to new clients, it's lagging
