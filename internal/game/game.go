@@ -157,7 +157,6 @@ func (g *Game) addClient(c *client.Client) {
 	// need to start as observer, replay all existing messages, and then switch to
 	// player
 	if g.player == nil {
-		g.logger.Debug("promoting new client to player", "client", c)
 		g.player = node
 		g.notifyNewPlayer(g.mostRecentFrame + 1)
 	}
@@ -182,7 +181,6 @@ func (g *Game) chooseNextPlayer(frame int32, allowSame bool) {
 		g.logger.Info("no more clients")
 		return
 	}
-	g.logger.Debug("new player selected", "player", g.player.Value)
 	g.notifyNewPlayer(frame)
 }
 
