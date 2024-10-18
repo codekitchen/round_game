@@ -6,6 +6,7 @@
 - [x] player needs to handle UI events like player list from server, currently ignoring until observer
 - [x] keep game going when in a background tab
 - [x] fix littlejs usage to have separate gameupdate with our frame counter
+- [ ] keep and display score
 
 # Server
 - [x] serve static assets
@@ -27,10 +28,12 @@
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around
+- [ ] make it more obvious when disconnected, error occurs, etc
 - [x] auto stop dropping (holding down arrow) when switching players
 - [ ] hold down left/right to move, not just tap
-- [ ] Player username and emoji avatar
-- [ ] Show position in the queue and notify when they're next
+- [x] Player username and emoji avatar
+- [x] Show position in the queue
+- [ ] notify "get ready" when they're next
 - [x] Handle too many players joining (100 max?)
 - [ ] Show some basic stats
 - [ ] Better graphics!
