@@ -41,7 +41,7 @@ type Client struct {
 	received chan<- ClientMessage
 	sending  chan *protocol.GameMessage
 	stop     chan *protocol.GameMessage
-	stopped  chan struct{}
+	done     chan struct{}
 }
 
 var playerNames = []string{"🐙", "🦊", "🦄", "🐼", "🦉", "🐳", "😺", "🍁", "🍀", "🌵", "🌲", "🌸", "🐹", "👾", "🎃"}
@@ -58,16 +58,11 @@ func New(ws *websocket.Conn, logger *slog.Logger) *Client {
 
 		sending: make(chan *protocol.GameMessage),
 		stop:    make(chan *protocol.GameMessage),
-		stopped: make(chan struct{}),
+		done:    make(chan struct{}),
 	}
 	totalPlayers.Add(1)
 	currentPlayers.Add(1)
 	return c
-}
-
-func (c *Client) Start(received chan<- ClientMessage) {
-	c.received = received
-	go c.loop()
 }
 
 // client events:
@@ -80,13 +75,21 @@ func (c *Client) String() string {
 	return c.ID
 }
 
-func (c *Client) Stop(finalMessage *protocol.GameMessage) {
-	c.stop <- finalMessage
-	<-c.stop
+func (c *Client) SendMessage(msg *protocol.GameMessage) {
+	c.sending <- msg
 }
 
-func (c *Client) loop() {
-	defer func() { _ = c.ws.CloseNow() }()
+// Stop the client, send an optional final message and wait for the client to stop.
+func (c *Client) Stop(finalMessage *protocol.GameMessage) {
+	c.stop <- finalMessage
+	<-c.done
+}
+
+func (c *Client) SetReceiveChannel(received chan<- ClientMessage) {
+	c.received = received
+}
+
+func (c *Client) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -108,14 +111,15 @@ func (c *Client) loop() {
 	finalMessage := <-c.stop
 	if finalMessage != nil {
 		// ignore error on final send, nothing more we can do
+		// write sync so we don't close before the message sends
+		// write timeout is tight so this won't block forever
 		_ = c.writeMessage(ctx, finalMessage)
 	}
-	close(c.stopped)
 	cancel()
 	wg.Wait()
 	c.logger.Debug("client disconnected")
 	currentPlayers.Add(-1)
-	c.stop <- nil
+	close(c.done)
 }
 
 func (c *Client) readLoop(ctx context.Context) {
@@ -123,7 +127,7 @@ func (c *Client) readLoop(ctx context.Context) {
 		msg, err := c.readMessage(ctx)
 		select {
 		case c.received <- ClientMessage{c, msg, err}:
-		case <-c.stopped:
+		case <-ctx.Done():
 			return
 		}
 		if err != nil {
@@ -141,11 +145,11 @@ func (c *Client) writeLoop(ctx context.Context) {
 				select {
 				// write errors get sent to the receiving queue
 				case c.received <- ClientMessage{c, nil, err}:
-				case <-c.stopped:
+				case <-ctx.Done():
 				}
 				return
 			}
-		case <-c.stopped:
+		case <-ctx.Done():
 			return
 		}
 	}
@@ -164,12 +168,12 @@ func (c *Client) pingLoop(ctx context.Context) {
 			select {
 			// write errors get sent to the receiving queue
 			case c.received <- ClientMessage{c, nil, err}:
-			case <-c.stopped:
+			case <-ctx.Done():
 			}
 			return
 		}
 		select {
-		case <-c.stopped:
+		case <-ctx.Done():
 			return
 		case <-time.After(50 * time.Millisecond):
 		}
@@ -187,10 +191,6 @@ func (c *Client) readMessage(ctx context.Context) (*protocol.GameMessage, error)
 		return nil, err
 	}
 	return msg, nil
-}
-
-func (c *Client) SendMessage(msg *protocol.GameMessage) {
-	c.sending <- msg
 }
 
 func (c *Client) writeMessage(ctx context.Context, msg *protocol.GameMessage) error {

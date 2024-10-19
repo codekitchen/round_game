@@ -4,10 +4,6 @@ import (
 	"expvar"
 	"log/slog"
 	"sync"
-
-	"github.com/coder/websocket"
-
-	"github.com/codekitchen/roundgame/internal/client"
 )
 
 var totalGames *expvar.Int
@@ -22,6 +18,7 @@ func init() {
 
 type GameManager struct {
 	mu    sync.RWMutex
+	wg    sync.WaitGroup
 	games map[GameID]*Game
 }
 
@@ -39,28 +36,14 @@ func NewGameManager() *GameManager {
 
 func (gm *GameManager) Stop() {
 	gm.mu.Lock()
-	defer gm.mu.Unlock()
-
 	for _, g := range gm.games {
 		g.Stop()
 	}
+	gm.mu.Unlock()
+	gm.wg.Wait()
 }
 
-// This gets called directly from the HTTP handler on multiple goroutines, so we need locking
-func (gm *GameManager) ClientJoined(ws *websocket.Conn) {
-	// keep trying games until we successfully add the client to one
-	for {
-		game := gm.findGame()
-		c := client.New(ws, game.logger)
-		err := game.AddClient(c)
-		if err == nil {
-			c.Start(game.fromClients)
-			break
-		}
-	}
-}
-
-func (gm *GameManager) findGame() *Game {
+func (gm *GameManager) FindGame() *Game {
 	g := gm.findExistingGame()
 	if g != nil {
 		return g
@@ -74,6 +57,7 @@ func (gm *GameManager) createNewGame() *Game {
 
 	g := newGame()
 	gm.games[g.ID] = g
+	gm.wg.Add(1)
 	go gm.runGame(g)
 	currentGames.Add(1)
 	totalGames.Add(1)
@@ -93,6 +77,7 @@ func (gm *GameManager) findExistingGame() *Game {
 }
 
 func (gm *GameManager) runGame(g *Game) {
+	defer gm.wg.Done()
 	err := g.loop()
 	if err == nil {
 		slog.Debug("game loop ended", "game", g.ID)

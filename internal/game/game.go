@@ -36,6 +36,7 @@ type Game struct {
 	fromClients chan client.ClientMessage
 	newClients  chan *client.Client
 
+	clientsSeen        int
 	idleTurnCounts     map[client.ClientID]int
 	keyPressedThisTurn bool
 }
@@ -74,7 +75,7 @@ func (g *Game) loop() error {
 
 loop:
 	for {
-		if g.player == nil && endGame == nil {
+		if g.player == nil && endGame == nil && g.clientsSeen > 0 {
 			// no players, start timer to end game
 			endGame = time.After(EndGameDelay)
 		}
@@ -91,7 +92,7 @@ loop:
 			g.gotClientMessage(fc.C, fc.Msg)
 		case <-endGame:
 			g.logger.Debug("no players, ending game")
-			g.Stop()
+			close(g.stop)
 		case <-g.stop:
 			break loop
 		}
@@ -129,6 +130,7 @@ func (g *Game) dropClient(c *client.Client, kickMessage *protocol.GameMessage) {
 func (g *Game) AddClient(c *client.Client) error {
 	select {
 	case g.newClients <- c:
+		c.SetReceiveChannel(g.fromClients)
 		return nil
 	case <-g.stop:
 		return ErrGameStopped
@@ -137,6 +139,7 @@ func (g *Game) AddClient(c *client.Client) error {
 
 func (g *Game) addClient(c *client.Client) {
 	g.logger.Debug("new client joined game", "client", c)
+	g.clientsSeen++
 	node := g.clients.InsertBefore(c, g.player)
 	c.SendMessage(&protocol.GameMessage{
 		Frame: 0,
@@ -173,6 +176,7 @@ func (g *Game) clientDisconnected(c *client.Client) {
 		g.chooseNextPlayer(g.mostRecentFrame+1, false)
 	}
 	g.clients.Remove(node)
+	delete(g.idleTurnCounts, c.ID)
 	g.sendPlayerList()
 }
 
