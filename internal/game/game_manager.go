@@ -21,7 +21,7 @@ func init() {
 }
 
 type GameManager struct {
-	sync.RWMutex
+	mu    sync.RWMutex
 	games map[GameID]*Game
 }
 
@@ -34,6 +34,15 @@ type GameManager struct {
 func NewGameManager() *GameManager {
 	return &GameManager{
 		games: make(map[GameID]*Game),
+	}
+}
+
+func (gm *GameManager) Stop() {
+	gm.mu.Lock()
+	defer gm.mu.Unlock()
+
+	for _, g := range gm.games {
+		g.Stop()
 	}
 }
 
@@ -60,8 +69,8 @@ func (gm *GameManager) findGame() *Game {
 }
 
 func (gm *GameManager) createNewGame() *Game {
-	gm.Lock()
-	defer gm.Unlock()
+	gm.mu.Lock()
+	defer gm.mu.Unlock()
 
 	g := newGame()
 	gm.games[g.ID] = g
@@ -72,8 +81,8 @@ func (gm *GameManager) createNewGame() *Game {
 }
 
 func (gm *GameManager) findExistingGame() *Game {
-	gm.RLock()
-	defer gm.RUnlock()
+	gm.mu.RLock()
+	defer gm.mu.RUnlock()
 
 	for _, g := range gm.games {
 		if g.NumPlayers() < MAX_PLAYERS {
@@ -91,8 +100,8 @@ func (gm *GameManager) runGame(g *Game) {
 		slog.Error("game loop failed", "game", g.ID, "err", err)
 	}
 
-	gm.Lock()
-	defer gm.Unlock()
+	gm.mu.Lock()
+	defer gm.mu.Unlock()
 
 	currentGames.Add(-1)
 	delete(gm.games, g.ID)

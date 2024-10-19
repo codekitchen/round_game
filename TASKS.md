@@ -25,6 +25,7 @@
 - [x] track some basic stats
 - [ ] preserve stats across restarts somewhere persistent
 - [x] fix replay to new clients, it's lagging
+- [ ] diagram out the goroutines and communication/synchronization points by hand or https://mermaid.js.org/syntax/entityRelationshipDiagram.html
 
 # Polish
 - [ ] better rotation of pieces, it's wonky how they move around

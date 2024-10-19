@@ -86,7 +86,7 @@ func (c *Client) Stop(finalMessage *protocol.GameMessage) {
 }
 
 func (c *Client) loop() {
-	defer c.ws.CloseNow()
+	defer func() { _ = c.ws.CloseNow() }()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -108,7 +108,7 @@ func (c *Client) loop() {
 	finalMessage := <-c.stop
 	if finalMessage != nil {
 		// ignore error on final send, nothing more we can do
-		c.writeMessage(ctx, finalMessage)
+		_ = c.writeMessage(ctx, finalMessage)
 	}
 	close(c.stopped)
 	cancel()

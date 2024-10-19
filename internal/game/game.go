@@ -17,7 +17,7 @@ var (
 	ErrGameStopped = errors.New("game stopped")
 )
 
-const EndGameDelay = 0
+const EndGameDelay = 0 * time.Second
 const AllowedIdleTurns = 2
 
 type GameID = string
@@ -32,6 +32,7 @@ type Game struct {
 	logger          *slog.Logger
 
 	stop        chan struct{}
+	done        chan struct{}
 	fromClients chan client.ClientMessage
 	newClients  chan *client.Client
 
@@ -58,6 +59,7 @@ func newGame() *Game {
 		logger:  slog.Default().With("game", id),
 
 		stop:        make(chan struct{}),
+		done:        make(chan struct{}),
 		fromClients: make(chan client.ClientMessage),
 		newClients:  make(chan *client.Client),
 
@@ -100,6 +102,7 @@ loop:
 
 func (g *Game) Stop() {
 	close(g.stop)
+	<-g.done
 }
 
 func (g *Game) NumPlayers() int {
@@ -113,6 +116,7 @@ func (g *Game) shutdown() {
 		n.Value.Stop(nil)
 		g.clients.Remove(n)
 	}
+	close(g.done)
 }
 
 func (g *Game) dropClient(c *client.Client, kickMessage *protocol.GameMessage) {

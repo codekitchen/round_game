@@ -46,7 +46,8 @@ func run() error {
 	files, _ := fs.Sub(static, "web/dst")
 
 	handler := http.NewServeMux()
-	handler.Handle("/ws", server.New())
+	wsHandler := server.New()
+	handler.Handle("/ws", wsHandler)
 	handler.Handle("/", http.FileServer(http.FS(files)))
 	handler.Handle("/debug/vars", expvar.Handler())
 
@@ -55,9 +56,6 @@ func run() error {
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,
 	}
-
-	// TODO: use this callback to gracefully shut down the websocket connections
-	// s.RegisterOnShutdown(func () {})
 
 	errc := make(chan error, 1)
 	go func() {
@@ -76,5 +74,7 @@ func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	return s.Shutdown(ctx)
+	err = s.Shutdown(ctx)
+	wsHandler.Stop()
+	return err
 }

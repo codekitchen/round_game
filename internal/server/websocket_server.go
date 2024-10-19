@@ -19,6 +19,10 @@ func New() *WebsocketServer {
 	}
 }
 
+func (s *WebsocketServer) Stop() {
+	s.gm.Stop()
+}
+
 func (s WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
 	if err != nil {
