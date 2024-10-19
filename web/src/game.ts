@@ -1,5 +1,5 @@
 import { isUIEvent } from "./events"
-import { Color, drawRect, drawText, drawTextScreen, EngineObject, manualEngineUpdate, setFontDefault, vec2 } from "./littlejs.esm"
+import { Color, drawRect, drawText, EngineObject, manualEngineUpdate, setFontDefault, vec2 } from "./littlejs.esm"
 import { multiplayerObjecsUpdate } from "./multiplayer_object"
 import { PlayerList } from "./player_list"
 import { gameserver } from "./protocol/gameserver"
@@ -101,9 +101,9 @@ export class Game {
 
     if (this.gameState === 'playing') {
       if (this.role === gameserver.Role.ROLE_PLAYER) {
-        drawTextScreen(`YOUR TURN!`, vec2(240, 145), 60, new Color(254 / 255, 209 / 255, 189 / 255));
+        drawText("YOUR\nTURN!", vec2(-4.5, 16), 2, new Color(254 / 255, 209 / 255, 189 / 255));
       } else {
-        drawTextScreen(`Waiting for your turn...`, vec2(240, 145), 20, new Color(1, 1, 1));
+        // drawTextScreen("", vec2(240, 145), 20, new Color(1, 1, 1));
       }
     }
   }
