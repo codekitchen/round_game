@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# This currently requires a local fork of artillery where we patched lib/engine_ws.js to
+# support sending binary websocket messages.
+# Maybe I'll try to upstream that, but there are multiple issues on this that have been open
+# for years e.g. https://github.com/artilleryio/artillery/issues/893 and not even a
+# response from the Artillery devs, so I'm not super motivated to try.
+
+pushd web
+npx rollup --config rollup.loadtest.js
+popd
+~/programming/recurse/artillery/packages/artillery/bin/run run dev/artillery_load_test.yml
