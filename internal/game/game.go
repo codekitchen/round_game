@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -8,9 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/codekitchen/roundgame/internal/client"
 	"github.com/codekitchen/roundgame/internal/container/list"
 	"github.com/codekitchen/roundgame/internal/protocol"
+	"github.com/coder/websocket"
 )
 
 var (
@@ -25,19 +26,19 @@ type GameID = string
 type Game struct {
 	ID              GameID
 	seed            int32
-	clients         *list.List[*client.Client]
-	player          *list.Node[*client.Client]
+	clients         *list.List[*client]
+	player          *list.Node[*client]
 	events          []*protocol.GameMessage
 	mostRecentFrame int32
 	logger          *slog.Logger
 
 	stop        chan struct{}
 	done        chan struct{}
-	fromClients chan client.ClientMessage
-	newClients  chan *client.Client
+	fromClients chan clientMessage
+	newClients  chan *client
 
 	clientsSeen        int
-	idleTurnCounts     map[client.ClientID]int
+	idleTurnCounts     map[ClientID]int
 	keyPressedThisTurn bool
 }
 
@@ -56,15 +57,15 @@ func newGame() *Game {
 	return &Game{
 		ID:      id,
 		seed:    rand.Int32(),
-		clients: list.New[*client.Client](),
+		clients: list.New[*client](),
 		logger:  slog.Default().With("game", id),
 
 		stop:        make(chan struct{}),
 		done:        make(chan struct{}),
-		fromClients: make(chan client.ClientMessage),
-		newClients:  make(chan *client.Client),
+		fromClients: make(chan clientMessage),
+		newClients:  make(chan *client),
 
-		idleTurnCounts: make(map[client.ClientID]int),
+		idleTurnCounts: make(map[ClientID]int),
 	}
 }
 
@@ -120,29 +121,23 @@ func (g *Game) shutdown() {
 	close(g.done)
 }
 
-func (g *Game) kickClient(c *client.Client, kickMessage *protocol.GameMessage) {
+func (g *Game) kickClient(c *client, kickMessage *protocol.GameMessage) {
 	g.logger.Debug("kicking client", "client", c)
 	c.Stop(kickMessage)
 	g.clientDisconnected(c)
 }
 
-func (g *Game) dropClient(c *client.Client, clientError error) {
+func (g *Game) dropClient(c *client, clientError error) {
 	g.logger.Debug("dropping client", "client", c, "error", clientError)
 	c.Stop(nil)
 	g.clientDisconnected(c)
 }
 
-func (g *Game) AddClient(c *client.Client) error {
-	select {
-	case g.newClients <- c:
-		c.SetReceiveChannel(g.fromClients)
-		return nil
-	case <-g.stop:
-		return ErrGameStopped
-	}
+func (g *Game) RunClient(ctx context.Context, ws *websocket.Conn) {
+	runClient(ctx, ws, g)
 }
 
-func (g *Game) addClient(c *client.Client) {
+func (g *Game) addClient(c *client) {
 	g.logger.Debug("new client joined game", "client", c)
 	g.clientsSeen++
 	node := g.clients.InsertBefore(c, g.player)
@@ -175,8 +170,8 @@ func (g *Game) addClient(c *client.Client) {
 	g.sendPlayerList()
 }
 
-func (g *Game) clientDisconnected(c *client.Client) {
-	node := g.clients.Find(func(v *client.Client) bool { return c == v })
+func (g *Game) clientDisconnected(c *client) {
+	node := g.clients.Find(func(v *client) bool { return c == v })
 	if g.player == node {
 		g.chooseNextPlayer(g.mostRecentFrame+1, false)
 	}
@@ -205,7 +200,7 @@ func (g *Game) addEvent(msg *protocol.GameMessage) {
 	}
 }
 
-func (g *Game) gotClientMessage(source *client.Client, msg *protocol.GameMessage) {
+func (g *Game) gotClientMessage(source *client, msg *protocol.GameMessage) {
 	if g.player != nil && source == g.player.Value {
 		g.mostRecentFrame = max(g.mostRecentFrame, msg.Frame)
 	}
@@ -224,7 +219,7 @@ func (g *Game) gotClientMessage(source *client.Client, msg *protocol.GameMessage
 	}
 }
 
-func (g *Game) handlePassControlMessage(source *client.Client, msg *protocol.GameMessage) {
+func (g *Game) handlePassControlMessage(source *client, msg *protocol.GameMessage) {
 	if source != g.player.Value {
 		g.logger.Info("ignoring pass control message from non-player", "msg", msg, "source", source)
 		return
@@ -237,7 +232,7 @@ func (g *Game) handlePassControlMessage(source *client.Client, msg *protocol.Gam
 	g.sendPlayerList()
 }
 
-func (g *Game) updatePlayerIdleCount(c *client.Client) {
+func (g *Game) updatePlayerIdleCount(c *client) {
 	if g.keyPressedThisTurn {
 		g.idleTurnCounts[c.ID] = 0
 	} else {
@@ -245,7 +240,7 @@ func (g *Game) updatePlayerIdleCount(c *client.Client) {
 	}
 }
 
-func (g *Game) dropPlayerIfIdle(c *client.Client) {
+func (g *Game) dropPlayerIfIdle(c *client) {
 	if g.idleTurnCounts[c.ID] >= AllowedIdleTurns {
 		kickMessage := &protocol.GameMessage{
 			Msg: &protocol.GameMessage_Kicked{

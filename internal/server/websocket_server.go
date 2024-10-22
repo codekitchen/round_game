@@ -5,10 +5,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/coder/websocket"
-
-	"github.com/codekitchen/roundgame/internal/client"
 	"github.com/codekitchen/roundgame/internal/game"
+	"github.com/coder/websocket"
 )
 
 type WebsocketServer struct {
@@ -32,6 +30,9 @@ func (s *WebsocketServer) Stop() {
 func (s WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.wg.Add(1)
 	defer s.wg.Done()
+
+	ctx := r.Context()
+
 	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
 	if err != nil {
 		slog.Debug("failed to accept websocket", "err", err)
@@ -42,10 +43,6 @@ func (s WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("accepted websocket", "conn", r.RemoteAddr)
 
 	// the HTTP request thread becomes the client.Client runloop thread
-	game := s.gm.FindGame()
-	c := client.New(ws, slog.With("game", game.ID))
-	if err := game.AddClient(c); err != nil {
-		return
-	}
-	c.Run()
+	g := s.gm.FindGame()
+	g.RunClient(ctx, ws)
 }
