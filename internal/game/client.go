@@ -5,7 +5,6 @@ import (
 	"expvar"
 	"fmt"
 	"log/slog"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -18,6 +17,8 @@ import (
 
 var totalPlayers *expvar.Int
 var currentPlayers *expvar.Int
+
+const sendBufferLen = 32
 
 func init() {
 	totalPlayers = expvar.NewInt("total_players")
@@ -39,17 +40,47 @@ type client struct {
 	logger *slog.Logger
 
 	gameQueue chan<- clientMessage
-	sending   chan *protocol.GameMessage
-	// closed is closed when the ws connection is closed due to error/disconnect
-	closed     chan struct{}
-	done       chan struct{}
-	errorMutex sync.Mutex
-	cancel     func()
+	sendQueue chan *protocol.GameMessage
+	// closed when this client is done shutting down
+	done chan struct{}
+	// used internally to cancel the ctx
+	cancel func()
 }
 
 var playerNames = []string{"🐙", "🦊", "🦄", "🐼", "🦉", "🐳", "😺", "🍁", "🍀", "🌵", "🌲", "🌸", "🐹", "👾", "🎃"}
 
 var nextClientID atomic.Uint32
+
+// client events:
+// - client read a message
+// - Close was called, time to disconnect
+// - message waiting to write
+// - error while reading or writing (timeout or other), need to disconnect and notify owner (game)
+
+// SendMessage sends a message to this client.
+// If the send queue is full, the message is dropped and the client connection is closed.
+func (c *client) SendMessage(msg *protocol.GameMessage) {
+	select {
+	case c.sendQueue <- msg:
+	default:
+		// send buffer is full, writes must be really slow
+		// let's drop this client
+		c.ws.CloseNow()
+	}
+}
+
+// Stop the client and close the connection.
+// Blocks until the client is done shutting down.
+// If finalMessage != nil, attempts to send an optional final message first.
+func (c *client) Stop(finalMessage *protocol.GameMessage) {
+	if finalMessage != nil {
+		c.SendMessage(finalMessage)
+	}
+	// force close the connection to shutdown the client
+	c.ws.CloseNow()
+	c.cancel()
+	<-c.done
+}
 
 func newClient(ws *websocket.Conn, gameQueue chan<- clientMessage, cancel func()) *client {
 	id := fmt.Sprintf("%d", nextClientID.Add(1))
@@ -60,43 +91,13 @@ func newClient(ws *websocket.Conn, gameQueue chan<- clientMessage, cancel func()
 		logger: slog.With("client", id),
 
 		gameQueue: gameQueue,
-		sending:   make(chan *protocol.GameMessage),
-		closed:    make(chan struct{}),
+		sendQueue: make(chan *protocol.GameMessage, sendBufferLen),
 		done:      make(chan struct{}),
 		cancel:    cancel,
 	}
 	totalPlayers.Add(1)
 	currentPlayers.Add(1)
 	return c
-}
-
-// client events:
-// - client read a message
-// - Close was called, time to disconnect
-// - message waiting to write
-// - error while reading or writing (timeout or other), need to disconnect and notify owner (game)
-
-func (c *client) String() string {
-	return c.ID
-}
-
-func (c *client) SendMessage(msg *protocol.GameMessage) {
-	select {
-	case c.sending <- msg:
-	case <-c.closed:
-		// client has started shutdown, ignore message
-	}
-}
-
-// Stop the client, send an optional final message and wait for the client to stop.
-func (c *client) Stop(finalMessage *protocol.GameMessage) {
-	if finalMessage != nil {
-		c.SendMessage(finalMessage)
-	}
-	// force close the connection to shutdown the client
-	c.ws.CloseNow()
-	c.cancel()
-	<-c.done
 }
 
 func runClient(ctx context.Context, ws *websocket.Conn, g *Game) {
@@ -111,9 +112,7 @@ func runClient(ctx context.Context, ws *websocket.Conn, g *Game) {
 		return
 	}
 
-	go func() {
-		c.writeLoop(ctx)
-	}()
+	go c.writeLoop(ctx)
 
 	// blocks until the connection is closed, either due to context
 	// cancel or connection error
@@ -128,14 +127,12 @@ func (c *client) readLoop(ctx context.Context) {
 	for {
 		msg, err := c.readMessage(ctx)
 		if err != nil {
-			c.handleError()
+			c.handleError(ctx, err)
+			return
 		}
 		select {
 		case c.gameQueue <- clientMessage{c, msg, err}:
 		case <-ctx.Done():
-			return
-		}
-		if err != nil {
 			return
 		}
 	}
@@ -144,48 +141,36 @@ func (c *client) readLoop(ctx context.Context) {
 func (c *client) writeLoop(ctx context.Context) {
 	ping := time.Tick(50 * time.Millisecond)
 	for {
+		var msg *protocol.GameMessage
 		select {
-		case msg := <-c.sending:
-			err := c.writeMessage(ctx, msg)
-			if err != nil {
-				c.handleError()
-				select {
-				// write errors get sent to the receiving queue
-				case c.gameQueue <- clientMessage{c, nil, err}:
-				case <-ctx.Done():
-				}
-				return
-			}
+		case <-ctx.Done():
+			return
+		case msg = <-c.sendQueue:
 		case <-ping:
-			err := c.writeMessage(ctx, &protocol.GameMessage{
+			msg = &protocol.GameMessage{
 				Msg: &protocol.GameMessage_Ping{
 					Ping: &protocol.GamePing{},
 				},
-			})
-			if err != nil {
-				c.handleError()
-				select {
-				// write errors get sent to the receiving queue
-				case c.gameQueue <- clientMessage{c, nil, err}:
-				case <-ctx.Done():
-				}
-				return
 			}
-		case <-ctx.Done():
+		}
+		err := c.writeMessage(ctx, msg)
+		if err != nil {
+			c.handleError(ctx, err)
 			return
 		}
 	}
 }
 
-func (c *client) handleError() {
-	c.errorMutex.Lock()
-	defer c.errorMutex.Unlock()
+// called for error in read/write loops
+func (c *client) handleError(ctx context.Context, err error) {
 	c.ws.CloseNow()
 	select {
-	case <-c.closed:
-		return
-	default:
-		close(c.closed)
+	// notify the game of error
+	case c.gameQueue <- clientMessage{c, nil, err}:
+	// but if the game already knows and is closing us, ignore the error. otherwise
+	// we deadlock with the game trying to close us, and us trying to notify the
+	// game.
+	case <-ctx.Done():
 	}
 }
 

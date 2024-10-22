@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
@@ -12,10 +11,6 @@ import (
 	"github.com/codekitchen/roundgame/internal/container/list"
 	"github.com/codekitchen/roundgame/internal/protocol"
 	"github.com/coder/websocket"
-)
-
-var (
-	ErrGameStopped = errors.New("game stopped")
 )
 
 const EndGameDelay = 0 * time.Second
@@ -40,6 +35,7 @@ type Game struct {
 	clientsSeen        int
 	idleTurnCounts     map[ClientID]int
 	keyPressedThisTurn bool
+	playerCount        atomic.Int32
 }
 
 var nextGameID atomic.Uint32
@@ -51,6 +47,25 @@ var nextGameID atomic.Uint32
 // - game is ending, notify and disconnect all clients
 // - write message to all clients, sometimes excluding the source client
 // - Close was called, end game and notify/disconnect all clients
+
+// RunClient starts a new client for this game using the given websocket
+// connection. This blocks until the client disconnects, it's designed to be run
+// on the HTTP connection thread.
+func (g *Game) RunClient(ctx context.Context, ws *websocket.Conn) {
+	runClient(ctx, ws, g)
+}
+
+// Stop the game, wait for it to shutdown. Only safe to call once.
+func (g *Game) Stop() {
+	close(g.stop)
+	<-g.done
+}
+
+// NumPlayers returns the current numbers of players in the game.
+// Safe to call from any thread.
+func (g *Game) NumPlayers() int32 {
+	return g.playerCount.Load()
+}
 
 func newGame() *Game {
 	id := fmt.Sprintf("%d", nextGameID.Add(1))
@@ -93,22 +108,13 @@ loop:
 			g.gotClientMessage(fc.C, fc.Msg)
 		case <-endGame:
 			g.logger.Debug("no players, ending game")
-			close(g.stop)
+			break loop
 		case <-g.stop:
 			break loop
 		}
 	}
 
 	return nil
-}
-
-func (g *Game) Stop() {
-	close(g.stop)
-	<-g.done
-}
-
-func (g *Game) NumPlayers() int {
-	return g.clients.Len()
 }
 
 func (g *Game) shutdown() {
@@ -133,14 +139,11 @@ func (g *Game) dropClient(c *client, clientError error) {
 	g.clientDisconnected(c)
 }
 
-func (g *Game) RunClient(ctx context.Context, ws *websocket.Conn) {
-	runClient(ctx, ws, g)
-}
-
 func (g *Game) addClient(c *client) {
 	g.logger.Debug("new client joined game", "client", c)
 	g.clientsSeen++
 	node := g.clients.InsertBefore(c, g.player)
+	g.playerCount.Add(1)
 	c.SendMessage(&protocol.GameMessage{
 		Frame: 0,
 		Msg: &protocol.GameMessage_GameInit{
@@ -155,8 +158,8 @@ func (g *Game) addClient(c *client) {
 	})
 
 	// replay past events to the new client
-	// TODO: this is happening on the main game thread, which could block
-	// for too long if send buffers fill up. we do have a tight write timeout, though.
+	// TODO: bundle all the events into one message, this is going to
+	// overflow the send queue.
 	for _, msg := range g.events {
 		c.SendMessage(msg)
 	}
@@ -176,6 +179,7 @@ func (g *Game) clientDisconnected(c *client) {
 		g.chooseNextPlayer(g.mostRecentFrame+1, false)
 	}
 	g.clients.Remove(node)
+	g.playerCount.Add(-1)
 	delete(g.idleTurnCounts, c.ID)
 	g.sendPlayerList()
 }
