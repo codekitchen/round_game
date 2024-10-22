@@ -86,7 +86,7 @@ loop:
 			endGame = nil
 		case fc := <-g.fromClients:
 			if fc.Err != nil {
-				g.dropClient(fc.C, nil, fc.Err)
+				g.dropClient(fc.C, fc.Err)
 				break
 			}
 			g.gotClientMessage(fc.C, fc.Msg)
@@ -120,10 +120,15 @@ func (g *Game) shutdown() {
 	close(g.done)
 }
 
-func (g *Game) dropClient(c *client.Client, kickMessage *protocol.GameMessage, clientError error) {
-	g.logger.Debug("dropping client", "client", c, "error", clientError)
+func (g *Game) kickClient(c *client.Client, kickMessage *protocol.GameMessage) {
+	g.logger.Debug("kicking client", "client", c)
 	c.Stop(kickMessage)
-	g.logger.Debug("client dropped", "client", c)
+	g.clientDisconnected(c)
+}
+
+func (g *Game) dropClient(c *client.Client, clientError error) {
+	g.logger.Debug("dropping client", "client", c, "error", clientError)
+	c.Stop(nil)
 	g.clientDisconnected(c)
 }
 
@@ -249,7 +254,7 @@ func (g *Game) dropPlayerIfIdle(c *client.Client) {
 				},
 			},
 		}
-		g.dropClient(c, kickMessage, nil)
+		g.kickClient(c, kickMessage)
 	}
 }
 

@@ -1,5 +1,10 @@
 {
   "livePreview.serverRoot": "dst/",
   "livePreview.autoRefreshPreview": "On Changes to Saved Files",
-  "makefile.configureOnOpen": false
+  "makefile.configureOnOpen": false,
+  "yaml.schemas": {
+    "https://www.artillery.io/schema.json": [
+      "file:///Users/brianp/programming/recurse/round_game/dev/artillery_load_test.yml"
+    ]
+  }
 }

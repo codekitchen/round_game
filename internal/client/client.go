@@ -38,10 +38,12 @@ type Client struct {
 	ws     *websocket.Conn
 	logger *slog.Logger
 
-	received chan<- ClientMessage
-	sending  chan *protocol.GameMessage
-	stop     chan *protocol.GameMessage
-	done     chan struct{}
+	received   chan<- ClientMessage
+	sending    chan *protocol.GameMessage
+	stop       chan *protocol.GameMessage
+	gotError   chan struct{}
+	done       chan struct{}
+	errorMutex sync.Mutex
 }
 
 var playerNames = []string{"🐙", "🦊", "🦄", "🐼", "🦉", "🐳", "😺", "🍁", "🍀", "🌵", "🌲", "🌸", "🐹", "👾", "🎃"}
@@ -56,9 +58,10 @@ func New(ws *websocket.Conn, logger *slog.Logger) *Client {
 		ws:     ws,
 		logger: logger.With("client", id),
 
-		sending: make(chan *protocol.GameMessage),
-		stop:    make(chan *protocol.GameMessage),
-		done:    make(chan struct{}),
+		sending:  make(chan *protocol.GameMessage),
+		stop:     make(chan *protocol.GameMessage),
+		gotError: make(chan struct{}),
+		done:     make(chan struct{}),
 	}
 	totalPlayers.Add(1)
 	currentPlayers.Add(1)
@@ -76,7 +79,11 @@ func (c *Client) String() string {
 }
 
 func (c *Client) SendMessage(msg *protocol.GameMessage) {
-	c.sending <- msg
+	select {
+	case c.sending <- msg:
+	case <-c.gotError:
+		// client has started shutdown, ignore message
+	}
 }
 
 // Stop the client, send an optional final message and wait for the client to stop.
@@ -125,6 +132,9 @@ func (c *Client) Run() {
 func (c *Client) readLoop(ctx context.Context) {
 	for {
 		msg, err := c.readMessage(ctx)
+		if err != nil {
+			c.handleError()
+		}
 		select {
 		case c.received <- ClientMessage{c, msg, err}:
 		case <-ctx.Done():
@@ -142,6 +152,7 @@ func (c *Client) writeLoop(ctx context.Context) {
 		case msg := <-c.sending:
 			err := c.writeMessage(ctx, msg)
 			if err != nil {
+				c.handleError()
 				select {
 				// write errors get sent to the receiving queue
 				case c.received <- ClientMessage{c, nil, err}:
@@ -165,6 +176,7 @@ func (c *Client) pingLoop(ctx context.Context) {
 			},
 		})
 		if err != nil {
+			c.handleError()
 			select {
 			// write errors get sent to the receiving queue
 			case c.received <- ClientMessage{c, nil, err}:
@@ -177,6 +189,17 @@ func (c *Client) pingLoop(ctx context.Context) {
 			return
 		case <-time.After(50 * time.Millisecond):
 		}
+	}
+}
+
+func (c *Client) handleError() {
+	c.errorMutex.Lock()
+	defer c.errorMutex.Unlock()
+	select {
+	case <-c.gotError:
+		return
+	default:
+		close(c.gotError)
 	}
 }
 

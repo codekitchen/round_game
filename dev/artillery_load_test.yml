@@ -2,8 +2,8 @@ config:
   target: 'ws://localhost:4011/ws'
   processor: '../web/dst/bundle/loadtest.cjs'
   phases:
-    - duration: 60
-      arrivalRate: 25
+    - duration: 20
+      arrivalRate: 35
 
 scenarios:
   - name: 'sending_object_from_function'
