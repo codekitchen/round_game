@@ -11,7 +11,11 @@ export class ServerConnection {
   }
   connect() {
     this.state = 'connecting'
-    this.ws = new WebSocket("/ws")
+    // construct the ws URL manually to support slightly older browsers
+    const loc = window.location
+    const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:'
+    const url = `${protocol}//${loc.host}/ws`
+    this.ws = new WebSocket(url)
     this.ws.binaryType = "arraybuffer"
     this.ws.onopen = this.onopen
     this.ws.onclose = this.onclose
