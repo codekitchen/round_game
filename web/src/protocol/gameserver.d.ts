@@ -139,6 +139,9 @@ export namespace gameserver {
         /** GameMessage gameEvent */
         gameEvent?: (gameserver.IGameEvent|null);
 
+        /** GameMessage replay */
+        replay?: (gameserver.IReplay|null);
+
         /** GameMessage playerList */
         playerList?: (gameserver.IPlayerList|null);
     }
@@ -176,11 +179,14 @@ export namespace gameserver {
         /** GameMessage gameEvent. */
         public gameEvent?: (gameserver.IGameEvent|null);
 
+        /** GameMessage replay. */
+        public replay?: (gameserver.IReplay|null);
+
         /** GameMessage playerList. */
         public playerList?: (gameserver.IPlayerList|null);
 
         /** GameMessage msg. */
-        public msg?: ("gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"kicked"|"gameEvent"|"playerList");
+        public msg?: ("gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"kicked"|"gameEvent"|"replay"|"playerList");
 
         /**
          * Creates a new GameMessage instance using the specified properties.
@@ -642,6 +648,103 @@ export namespace gameserver {
 
         /**
          * Gets the default type url for GameEvent
+         * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns The default type url
+         */
+        public static getTypeUrl(typeUrlPrefix?: string): string;
+    }
+
+    /** Properties of a Replay. */
+    interface IReplay {
+
+        /** Replay messages */
+        messages?: (gameserver.IGameMessage[]|null);
+    }
+
+    /** Represents a Replay. */
+    class Replay implements IReplay {
+
+        /**
+         * Constructs a new Replay.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: gameserver.IReplay);
+
+        /** Replay messages. */
+        public messages: gameserver.IGameMessage[];
+
+        /**
+         * Creates a new Replay instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns Replay instance
+         */
+        public static create(properties?: gameserver.IReplay): gameserver.Replay;
+
+        /**
+         * Encodes the specified Replay message. Does not implicitly {@link gameserver.Replay.verify|verify} messages.
+         * @param message Replay message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: gameserver.IReplay, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified Replay message, length delimited. Does not implicitly {@link gameserver.Replay.verify|verify} messages.
+         * @param message Replay message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: gameserver.IReplay, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a Replay message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns Replay
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gameserver.Replay;
+
+        /**
+         * Decodes a Replay message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns Replay
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gameserver.Replay;
+
+        /**
+         * Verifies a Replay message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a Replay message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns Replay
+         */
+        public static fromObject(object: { [k: string]: any }): gameserver.Replay;
+
+        /**
+         * Creates a plain object from a Replay message. Also converts values to other types if specified.
+         * @param message Replay
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: gameserver.Replay, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this Replay to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+
+        /**
+         * Gets the default type url for Replay
          * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
          * @returns The default type url
          */

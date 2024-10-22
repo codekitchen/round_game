@@ -128,19 +128,19 @@ func (g *Game) shutdown() {
 }
 
 func (g *Game) kickClient(c *client, kickMessage *protocol.GameMessage) {
-	g.logger.Debug("kicking client", "client", c)
+	g.logger.Debug("kicking client", "client", c.ID)
 	c.Stop(kickMessage)
 	g.clientDisconnected(c)
 }
 
 func (g *Game) dropClient(c *client, clientError error) {
-	g.logger.Debug("dropping client", "client", c, "error", clientError)
+	g.logger.Debug("dropping client", "client", c.ID, "error", clientError)
 	c.Stop(nil)
 	g.clientDisconnected(c)
 }
 
 func (g *Game) addClient(c *client) {
-	g.logger.Debug("new client joined game", "client", c)
+	g.logger.Debug("new client joined game", "client", c.ID)
 	g.clientsSeen++
 	node := g.clients.InsertBefore(c, g.player)
 	g.playerCount.Add(1)
@@ -158,11 +158,11 @@ func (g *Game) addClient(c *client) {
 	})
 
 	// replay past events to the new client
-	// TODO: bundle all the events into one message, this is going to
-	// overflow the send queue.
-	for _, msg := range g.events {
-		c.SendMessage(msg)
-	}
+	c.SendMessage(&protocol.GameMessage{Msg: &protocol.GameMessage_Replay{
+		Replay: &protocol.Replay{
+			Messages: g.events[:],
+		},
+	}})
 
 	// need to start as observer, replay all existing messages, and then switch to
 	// player

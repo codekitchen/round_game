@@ -45,6 +45,8 @@ export class Game {
       this.gameState = 'kicked_idle'
     } else if (isUIEvent(ev)) {
       this.handleUIEvent(ev)
+    } else if (ev.replay) {
+      this.recording.push(...(ev.replay.messages as gameserver.GameMessage[]))
     } else {
       this.recording.push(ev)
     }

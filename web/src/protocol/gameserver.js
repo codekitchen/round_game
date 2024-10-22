@@ -271,6 +271,7 @@ export const gameserver = $root.gameserver = (() => {
          * @property {gameserver.IGamePing|null} [ping] GameMessage ping
          * @property {gameserver.IKicked|null} [kicked] GameMessage kicked
          * @property {gameserver.IGameEvent|null} [gameEvent] GameMessage gameEvent
+         * @property {gameserver.IReplay|null} [replay] GameMessage replay
          * @property {gameserver.IPlayerList|null} [playerList] GameMessage playerList
          */
 
@@ -354,6 +355,14 @@ export const gameserver = $root.gameserver = (() => {
         GameMessage.prototype.gameEvent = null;
 
         /**
+         * GameMessage replay.
+         * @member {gameserver.IReplay|null|undefined} replay
+         * @memberof gameserver.GameMessage
+         * @instance
+         */
+        GameMessage.prototype.replay = null;
+
+        /**
          * GameMessage playerList.
          * @member {gameserver.IPlayerList|null|undefined} playerList
          * @memberof gameserver.GameMessage
@@ -366,12 +375,12 @@ export const gameserver = $root.gameserver = (() => {
 
         /**
          * GameMessage msg.
-         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"kicked"|"gameEvent"|"playerList"|undefined} msg
+         * @member {"gameInit"|"playerChange"|"heartbeat"|"passControl"|"ping"|"kicked"|"gameEvent"|"replay"|"playerList"|undefined} msg
          * @memberof gameserver.GameMessage
          * @instance
          */
         Object.defineProperty(GameMessage.prototype, "msg", {
-            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "ping", "kicked", "gameEvent", "playerList"]),
+            get: $util.oneOfGetter($oneOfFields = ["gameInit", "playerChange", "heartbeat", "passControl", "ping", "kicked", "gameEvent", "replay", "playerList"]),
             set: $util.oneOfSetter($oneOfFields)
         });
 
@@ -415,6 +424,8 @@ export const gameserver = $root.gameserver = (() => {
                 $root.gameserver.Kicked.encode(message.kicked, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
             if (message.gameEvent != null && Object.hasOwnProperty.call(message, "gameEvent"))
                 $root.gameserver.GameEvent.encode(message.gameEvent, writer.uint32(/* id 100, wireType 2 =*/802).fork()).ldelim();
+            if (message.replay != null && Object.hasOwnProperty.call(message, "replay"))
+                $root.gameserver.Replay.encode(message.replay, writer.uint32(/* id 101, wireType 2 =*/810).fork()).ldelim();
             if (message.playerList != null && Object.hasOwnProperty.call(message, "playerList"))
                 $root.gameserver.PlayerList.encode(message.playerList, writer.uint32(/* id 200, wireType 2 =*/1602).fork()).ldelim();
             return writer;
@@ -481,6 +492,10 @@ export const gameserver = $root.gameserver = (() => {
                     }
                 case 100: {
                         message.gameEvent = $root.gameserver.GameEvent.decode(reader, reader.uint32());
+                        break;
+                    }
+                case 101: {
+                        message.replay = $root.gameserver.Replay.decode(reader, reader.uint32());
                         break;
                     }
                 case 200: {
@@ -594,6 +609,16 @@ export const gameserver = $root.gameserver = (() => {
                         return "gameEvent." + error;
                 }
             }
+            if (message.replay != null && message.hasOwnProperty("replay")) {
+                if (properties.msg === 1)
+                    return "msg: multiple values";
+                properties.msg = 1;
+                {
+                    let error = $root.gameserver.Replay.verify(message.replay);
+                    if (error)
+                        return "replay." + error;
+                }
+            }
             if (message.playerList != null && message.hasOwnProperty("playerList")) {
                 if (properties.msg === 1)
                     return "msg: multiple values";
@@ -656,6 +681,11 @@ export const gameserver = $root.gameserver = (() => {
                     throw TypeError(".gameserver.GameMessage.gameEvent: object expected");
                 message.gameEvent = $root.gameserver.GameEvent.fromObject(object.gameEvent);
             }
+            if (object.replay != null) {
+                if (typeof object.replay !== "object")
+                    throw TypeError(".gameserver.GameMessage.replay: object expected");
+                message.replay = $root.gameserver.Replay.fromObject(object.replay);
+            }
             if (object.playerList != null) {
                 if (typeof object.playerList !== "object")
                     throw TypeError(".gameserver.GameMessage.playerList: object expected");
@@ -715,6 +745,11 @@ export const gameserver = $root.gameserver = (() => {
                 object.gameEvent = $root.gameserver.GameEvent.toObject(message.gameEvent, options);
                 if (options.oneofs)
                     object.msg = "gameEvent";
+            }
+            if (message.replay != null && message.hasOwnProperty("replay")) {
+                object.replay = $root.gameserver.Replay.toObject(message.replay, options);
+                if (options.oneofs)
+                    object.msg = "replay";
             }
             if (message.playerList != null && message.hasOwnProperty("playerList")) {
                 object.playerList = $root.gameserver.PlayerList.toObject(message.playerList, options);
@@ -1564,6 +1599,230 @@ export const gameserver = $root.gameserver = (() => {
         };
 
         return GameEvent;
+    })();
+
+    gameserver.Replay = (function() {
+
+        /**
+         * Properties of a Replay.
+         * @memberof gameserver
+         * @interface IReplay
+         * @property {Array.<gameserver.IGameMessage>|null} [messages] Replay messages
+         */
+
+        /**
+         * Constructs a new Replay.
+         * @memberof gameserver
+         * @classdesc Represents a Replay.
+         * @implements IReplay
+         * @constructor
+         * @param {gameserver.IReplay=} [properties] Properties to set
+         */
+        function Replay(properties) {
+            this.messages = [];
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * Replay messages.
+         * @member {Array.<gameserver.IGameMessage>} messages
+         * @memberof gameserver.Replay
+         * @instance
+         */
+        Replay.prototype.messages = $util.emptyArray;
+
+        /**
+         * Creates a new Replay instance using the specified properties.
+         * @function create
+         * @memberof gameserver.Replay
+         * @static
+         * @param {gameserver.IReplay=} [properties] Properties to set
+         * @returns {gameserver.Replay} Replay instance
+         */
+        Replay.create = function create(properties) {
+            return new Replay(properties);
+        };
+
+        /**
+         * Encodes the specified Replay message. Does not implicitly {@link gameserver.Replay.verify|verify} messages.
+         * @function encode
+         * @memberof gameserver.Replay
+         * @static
+         * @param {gameserver.IReplay} message Replay message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Replay.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.messages != null && message.messages.length)
+                for (let i = 0; i < message.messages.length; ++i)
+                    $root.gameserver.GameMessage.encode(message.messages[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified Replay message, length delimited. Does not implicitly {@link gameserver.Replay.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gameserver.Replay
+         * @static
+         * @param {gameserver.IReplay} message Replay message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        Replay.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a Replay message from the specified reader or buffer.
+         * @function decode
+         * @memberof gameserver.Replay
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gameserver.Replay} Replay
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Replay.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.gameserver.Replay();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1: {
+                        if (!(message.messages && message.messages.length))
+                            message.messages = [];
+                        message.messages.push($root.gameserver.GameMessage.decode(reader, reader.uint32()));
+                        break;
+                    }
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a Replay message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gameserver.Replay
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gameserver.Replay} Replay
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        Replay.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a Replay message.
+         * @function verify
+         * @memberof gameserver.Replay
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        Replay.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.messages != null && message.hasOwnProperty("messages")) {
+                if (!Array.isArray(message.messages))
+                    return "messages: array expected";
+                for (let i = 0; i < message.messages.length; ++i) {
+                    let error = $root.gameserver.GameMessage.verify(message.messages[i]);
+                    if (error)
+                        return "messages." + error;
+                }
+            }
+            return null;
+        };
+
+        /**
+         * Creates a Replay message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gameserver.Replay
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gameserver.Replay} Replay
+         */
+        Replay.fromObject = function fromObject(object) {
+            if (object instanceof $root.gameserver.Replay)
+                return object;
+            let message = new $root.gameserver.Replay();
+            if (object.messages) {
+                if (!Array.isArray(object.messages))
+                    throw TypeError(".gameserver.Replay.messages: array expected");
+                message.messages = [];
+                for (let i = 0; i < object.messages.length; ++i) {
+                    if (typeof object.messages[i] !== "object")
+                        throw TypeError(".gameserver.Replay.messages: object expected");
+                    message.messages[i] = $root.gameserver.GameMessage.fromObject(object.messages[i]);
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a Replay message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gameserver.Replay
+         * @static
+         * @param {gameserver.Replay} message Replay
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        Replay.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            let object = {};
+            if (options.arrays || options.defaults)
+                object.messages = [];
+            if (message.messages && message.messages.length) {
+                object.messages = [];
+                for (let j = 0; j < message.messages.length; ++j)
+                    object.messages[j] = $root.gameserver.GameMessage.toObject(message.messages[j], options);
+            }
+            return object;
+        };
+
+        /**
+         * Converts this Replay to JSON.
+         * @function toJSON
+         * @memberof gameserver.Replay
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        Replay.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for Replay
+         * @function getTypeUrl
+         * @memberof gameserver.Replay
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        Replay.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/gameserver.Replay";
+        };
+
+        return Replay;
     })();
 
     gameserver.PassControl = (function() {

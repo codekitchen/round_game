@@ -26,6 +26,7 @@ message GameMessage {
 
     // game-specific events that the server doesn't parse
     GameEvent gameEvent = 100;
+    Replay replay = 101;
 
     // UI events that don't directly affect the simulation state
     PlayerList playerList = 200;
@@ -47,6 +48,10 @@ message PlayerChange {
 
 message GameEvent {
   string type = 1;
+}
+
+message Replay {
+  repeated GameMessage messages = 1;
 }
 
 message PassControl {

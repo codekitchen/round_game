@@ -12,7 +12,7 @@ function gameInit() {
   // turn off collisions to avoid accidentally using them
   setEnablePhysicsSolver(false);
   setShowWatermark(false);
-  // initPostProcess();
+  initPostProcess();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

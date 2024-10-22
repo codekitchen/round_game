@@ -63,8 +63,7 @@ func (c *client) SendMessage(msg *protocol.GameMessage) {
 	select {
 	case c.sendQueue <- msg:
 	default:
-		// send buffer is full, writes must be really slow
-		// let's drop this client
+		c.logger.Debug("send buffer full, dropping client")
 		c.ws.CloseNow()
 	}
 }
