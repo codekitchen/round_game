@@ -160,7 +160,7 @@ func (c *client) writeLoop(ctx context.Context) {
 	}
 }
 
-// called for error in read/write loops
+// called for error in read/write loops, do not call from the game loop thread!
 func (c *client) handleError(ctx context.Context, err error) {
 	c.ws.CloseNow()
 	select {
