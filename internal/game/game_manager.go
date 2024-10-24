@@ -78,7 +78,7 @@ func (gm *GameManager) findExistingGame() *Game {
 
 func (gm *GameManager) runGame(g *Game) {
 	defer gm.wg.Done()
-	err := g.loop()
+	err := g.runGame()
 	if err == nil {
 		slog.Debug("game loop ended", "game", g.ID)
 	} else {

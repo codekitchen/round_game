@@ -77,6 +77,10 @@ func (c *client) Stop(finalMessage *protocol.GameMessage) {
 	}
 	// force close the connection to shutdown the client
 	c.ws.CloseNow()
+	// need to externally cancel the ctx, otherwise we could deadlock with the
+	// client trying to write to gameQueue and the game waiting here for c.done.
+	// The subtlety of this makes me question whether the game should really be
+	// waiting for c.done before Stop() returns.
 	c.cancel()
 	<-c.done
 }

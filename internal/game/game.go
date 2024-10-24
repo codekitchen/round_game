@@ -84,7 +84,8 @@ func newGame() *Game {
 	}
 }
 
-func (g *Game) loop() error {
+// runGame runs the game loop. It returns when the game is over.
+func (g *Game) runGame() error {
 	g.logger.Debug("starting new game")
 	defer g.shutdown()
 	var endGame <-chan time.Time
